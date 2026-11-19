@@ -1,0 +1,23 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import InquiryList from '@/components/admin/inquiries/InquiryList';
+import { listInquiries } from '@/lib/server/inquiries';
+import { listRooms, roomLabel } from '@/lib/server/rooms';
+const [inquiries, rooms] = await Promise.all([
+  listInquiries(),
+  listRooms({ includeInactive: true }),
+]);
+---
+
+<AdminLayout
+  title="Solicitudes web"
+  section="inquiries"
+  description="Responde las consultas del sitio web y conviértelas en reservas."
+>
+  <InquiryList
+    client:load
+    inquiries={inquiries}
+    rooms={rooms.map((r) => ({ id: r.id, label: roomLabel(r) }))}
+    isAdmin={Astro.locals.user!.role === 'admin'}
+  />
+</AdminLayout>

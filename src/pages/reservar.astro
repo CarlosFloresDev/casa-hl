@@ -1,0 +1,45 @@
+---
+import { getImage } from 'astro:assets';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import BookingRequest, { type PublicRoom } from '@/components/site/BookingRequest';
+import { addDays, isIsoDate, todayIso } from '@/lib/domain/dates';
+import { roomImage } from '@/lib/images';
+import { listPublicRooms } from '@/lib/server/rooms';
+
+const today = todayIso();
+const p = Astro.url.searchParams;
+const qIn = p.get('checkIn');
+const checkIn = qIn && isIsoDate(qIn) && qIn >= today ? qIn : today;
+const qOut = p.get('checkOut');
+const checkOut = qOut && isIsoDate(qOut) && qOut > checkIn ? qOut : addDays(checkIn, 1);
+const guests = Math.min(20, Math.max(1, Number(p.get('guests')) || 2));
+
+const list = await listPublicRooms();
+const rooms: PublicRoom[] = await Promise.all(
+  list.map(async (r) => ({
+    id: r.id,
+    name: r.name,
+    number: r.number,
+    type: r.type,
+    capacity: r.capacity,
+    priceCents: r.priceCents,
+    image: (await getImage({ src: roomImage(r.image), width: 240, height: 240, fit: 'cover', format: 'webp' })).src,
+  })),
+);
+const roomParam = p.get('room');
+const roomId = roomParam && rooms.some((r) => r.id === roomParam) ? roomParam : null;
+---
+
+<SiteLayout title="Solicitar reserva" description="Elige tus fechas y habitación, mira el precio al instante y envía tu solicitud. Separas con el 50%.">
+  <section class="bg-stone">
+    <div class="mx-auto max-w-7xl px-4 pt-12 pb-20 sm:px-6 lg:px-8 lg:pt-16">
+      <h1 data-lines class="font-serif text-[clamp(3rem,7vw,6rem)] leading-[0.92] tracking-[-0.02em]"><span class="line"><span>Solicitar reserva</span></span></h1>
+      <p class="hero-fade mt-5 max-w-2xl text-lg text-ink-soft" style="--d:300">
+        Mira el precio al instante. Revisamos tu solicitud y te escribimos por WhatsApp para confirmar y coordinar el adelanto.
+      </p>
+      <div class="mt-12">
+        <BookingRequest client:load rooms={rooms} today={today} initial={{ checkIn, checkOut, guests, roomId }} />
+      </div>
+    </div>
+  </section>
+</SiteLayout>

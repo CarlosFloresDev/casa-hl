@@ -1,0 +1,394 @@
+---
+import { Image } from 'astro:assets';
+import Wifi from '@lucide/astro/icons/wifi';
+import ShowerHead from '@lucide/astro/icons/shower-head';
+import Sparkles from '@lucide/astro/icons/sparkles';
+import Clock from '@lucide/astro/icons/clock';
+import Users from '@lucide/astro/icons/users';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import { SITE, whatsappLink } from '@/config/site';
+import { AMENITIES, EXTRAS, EXTRA_KEYS } from '@/lib/domain/catalog';
+import { addDays, todayIso } from '@/lib/domain/dates';
+import { formatMoney } from '@/lib/domain/money';
+import { roomImage, siteImage } from '@/lib/images';
+import { listPublicRooms } from '@/lib/server/rooms';
+
+const rooms = await listPublicRooms();
+const fromPrice = rooms.length ? Math.min(...rooms.map((r) => r.priceCents)) : 0;
+const today = todayIso();
+const tomorrow = addDays(today, 1);
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
+
+const numberWords = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+const roomCount = numberWords[rooms.length] ?? String(rooms.length);
+const statement = `Somos una casa familiar con ${roomCount} ${rooms.length === 1 ? 'habitación' : 'habitaciones'}. Limpias, silenciosas y con agua caliente a cualquier hora, para que llegues, descanses de verdad y sigas tu viaje con energía.`;
+
+const heroLines = ['Descansa como', 'en casa, a un', 'paso de todo.'];
+
+const faqs = [
+  {
+    q: '¿Cómo separo mi habitación?',
+    a: 'Envía tu solicitud desde la web o escríbenos por WhatsApp. Te confirmamos la disponibilidad y separas con el 50% del total por Yape, Plin o transferencia. El saldo lo pagas al llegar.',
+  },
+  {
+    q: '¿A qué hora puedo ingresar y salir?',
+    a: `El ingreso es desde las ${SITE.checkInTime} y la salida hasta las ${SITE.checkOutTime}. Si llegas antes o sales más tarde, avísanos y vemos si la habitación está libre.`,
+  },
+  {
+    q: '¿Qué medios de pago aceptan?',
+    a: 'Efectivo, Yape, Plin, transferencia bancaria y tarjeta en POS al momento del ingreso.',
+  },
+  {
+    q: '¿Puedo pedir desayuno, cochera o recojo del terminal?',
+    a: 'Sí. Agrégalos al solicitar tu reserva; el precio se suma a tu cotización y lo ves antes de enviarla.',
+  },
+];
+---
+
+<SiteLayout overlayHeader>
+  <!-- ================= Portada ================= -->
+  <section class="relative isolate flex min-h-[100dvh] flex-col overflow-hidden bg-pine-900 text-white" aria-labelledby="hero-title">
+    <div class="hero-media absolute inset-0 -z-10" data-parallax="0.32">
+      <div class="absolute -inset-6" data-mouse="-22">
+        <Image
+          src={siteImage('hero-habitacion')}
+          alt="Habitación con cama de dos plazas, muebles de madera y ventana hacia un jardín"
+          widths={[768, 1280, 1920, 2400]}
+          sizes="100vw"
+          loading="eager"
+          fetchpriority="high"
+          class="h-full w-full object-cover"
+        />
+      </div>
+    </div>
+    <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(120%_80%_at_0%_100%,rgb(9_26_22/0.92)_0%,rgb(9_26_22/0.55)_45%,transparent_75%)]"></div>
+    <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-black/45 to-transparent"></div>
+    <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-[rgb(9_26_22/0.94)] via-[rgb(9_26_22/0.6)] to-[rgb(9_26_22/0.15)] lg:hidden"></div>
+
+    <div class="mx-auto mt-auto grid w-full max-w-[90rem] gap-10 px-5 pt-36 pb-14 sm:px-8 lg:grid-cols-[minmax(0,1fr)_25rem] lg:items-end lg:px-12 lg:pb-20">
+      <div data-mouse="10">
+        <p class="hero-fade mb-6 flex items-center gap-3 text-[15px] text-white/80" style="--d:150">
+          <span class="h-px w-10 bg-white/50" aria-hidden="true"></span>
+          {SITE.name}
+        </p>
+        <h1 id="hero-title" data-lines class="font-serif text-[clamp(3.4rem,9.2vw,8.75rem)] leading-[0.9] tracking-[-0.02em]">
+          {
+            heroLines.map((line, i) => (
+              <span class="line" style={`--d:${250 + i * 110}`}>
+                <span>{line}</span>
+              </span>
+            ))
+          }
+        </h1>
+        <p class="hero-fade mt-8 max-w-md text-lg leading-relaxed text-white/80" style="--d:750">
+          Habitaciones con baño privado, agua caliente y Wi-Fi. Atención directa de la familia, sin intermediarios.
+        </p>
+      </div>
+
+      <form
+        action="/reservar"
+        method="get"
+        class="glass hero-fade rounded-[1.75rem] p-3 text-white"
+        style="--d:900"
+        aria-label="Consultar disponibilidad"
+      >
+        <p class="px-3 pt-2 pb-3 text-sm text-white/75">
+          {fromPrice > 0 ? <>Desde <strong class="font-semibold text-white">{formatMoney(fromPrice)}</strong> la noche</> : 'Consulta disponibilidad'}
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="rounded-2xl bg-black/15 px-4 py-3 transition-colors focus-within:bg-black/30">
+            <span class="block text-xs text-white/70">Llegada</span>
+            <input type="date" name="checkIn" value={today} min={today} required class="w-full bg-transparent text-[15px] font-medium outline-none [color-scheme:dark]" />
+          </label>
+          <label class="rounded-2xl bg-black/15 px-4 py-3 transition-colors focus-within:bg-black/30">
+            <span class="block text-xs text-white/70">Salida</span>
+            <input type="date" name="checkOut" value={tomorrow} min={tomorrow} required class="w-full bg-transparent text-[15px] font-medium outline-none [color-scheme:dark]" />
+          </label>
+          <label class="col-span-2 flex items-center justify-between rounded-2xl bg-black/15 px-4 py-3 transition-colors focus-within:bg-black/30">
+            <span class="text-xs text-white/70">Personas</span>
+            <select name="guests" class="bg-transparent text-right text-[15px] font-medium outline-none [&>option]:text-ink">
+              {[1, 2, 3, 4, 5, 6].map((n) => <option value={n} selected={n === 2}>{n}</option>)}
+            </select>
+          </label>
+        </div>
+        <button type="submit" class="btn-press btn-arrow mt-2 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-marigold-500 text-[15px] font-semibold text-ink hover:bg-[#e3a43c]">
+          Ver disponibilidad y precio
+          <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+        </button>
+      </form>
+    </div>
+
+    <a href="#la-propuesta" class="scroll-cue hero-fade absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-xs text-white/70 lg:flex" style="--d:1200" aria-label="Bajar al contenido">
+      <span class="relative block h-10 w-px overflow-hidden bg-white/20"><span class="absolute inset-0 bg-white"></span></span>
+    </a>
+  </section>
+
+  <!-- ================= Declaración ================= -->
+  <section id="la-propuesta" class="relative bg-surface py-28 lg:py-40">
+    <div class="mx-auto grid max-w-[90rem] gap-14 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-24 lg:px-12">
+      <p data-scrub class="max-w-[22ch] font-serif text-[clamp(2.1rem,4.6vw,4.4rem)] leading-[1.06] tracking-[-0.01em] text-ink">
+        {statement.split(' ').map((w) => <span class="scrub-word">{w} </span>)}
+      </p>
+      <div class="self-end">
+        <div data-reveal="mask" class="overflow-hidden rounded-[1.75rem]">
+          <Image src={siteImage('detalle-comedor')} alt="Comedor con mesa de madera, sillas verdes y plantas" widths={[400, 640, 800]} sizes="(min-width: 1024px) 22rem, 100vw" class="aspect-[4/5] w-full object-cover" />
+        </div>
+        <p data-reveal class="mt-5 text-[15px] leading-relaxed text-ink-soft" style="--d:200">
+          Ingreso desde las {SITE.checkInTime}, salida hasta las {SITE.checkOutTime}. Separas con el 50% y el resto lo pagas al llegar.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Habitaciones ================= -->
+  <section id="habitaciones" class="scroll-mt-16 bg-stone pt-28 pb-24 lg:pt-36 lg:pb-40">
+    <div class="mx-auto max-w-[90rem] px-5 sm:px-8 lg:px-12">
+      <div class="mb-14 flex flex-wrap items-end justify-between gap-8 lg:mb-20">
+        <h2 data-lines class="font-serif text-[clamp(3rem,7vw,6.5rem)] leading-[0.92] tracking-[-0.02em]">
+          <span class="line"><span>Habitaciones</span></span>
+          <span class="line" style="--d:100"><span class="text-ink-muted">para cada viaje</span></span>
+        </h2>
+        <p data-reveal class="max-w-sm text-lg text-ink-soft" style="--d:200">
+          Ropa de cama limpia en cada ingreso. Elige según cuántos viajan y cuánto tiempo te quedas.
+        </p>
+      </div>
+
+      {
+        rooms.length === 0 ? (
+          <p class="text-ink-muted">Pronto publicaremos nuestras habitaciones. Escríbenos por WhatsApp para consultar disponibilidad.</p>
+        ) : (
+          <ul data-stack class="space-y-6 lg:space-y-10">
+            {rooms.map((room, i) => (
+              <li
+                class="room-card relative overflow-hidden rounded-[2rem] bg-surface shadow-[0_1px_2px_rgb(17_42_36/0.06),0_40px_80px_-40px_rgb(17_42_36/0.35)] lg:sticky"
+                style={`top: calc(6.5rem + ${i} * 1.4rem)`}
+              >
+                <div class="grid lg:h-[min(36rem,calc(100dvh-10rem))] lg:grid-cols-[1.3fr_1fr]">
+                  <a href={`/habitaciones/${room.slug}`} class="relative block overflow-hidden" tabindex="-1" aria-hidden="true">
+                    <Image
+                      src={roomImage(room.image)}
+                      alt=""
+                      widths={[640, 960, 1400]}
+                      sizes="(min-width: 1024px) 56vw, 100vw"
+                      class="room-img aspect-[4/3] h-full w-full object-cover lg:aspect-auto"
+                      transition:name={`room-${room.slug}`}
+                    />
+                    <span class="absolute top-5 left-5 rounded-full bg-white/90 px-3.5 py-1.5 text-sm font-medium text-ink backdrop-blur">
+                      {formatMoney(room.priceCents)} <span class="font-normal text-ink-muted">/ noche</span>
+                    </span>
+                  </a>
+                  <div class="flex flex-col p-7 sm:p-10 lg:p-12">
+                    <p class="flex items-center gap-2 text-sm text-ink-muted">
+                      {room.type}
+                      <span class="h-3 w-px bg-mist" aria-hidden="true" />
+                      <Users class="size-3.5" aria-hidden="true" /> hasta {room.capacity}
+                    </p>
+                    <h3 class="mt-3 font-serif text-[clamp(2.4rem,3.6vw,3.6rem)] leading-none tracking-[-0.01em]">
+                      <a href={`/habitaciones/${room.slug}`} class="transition-colors hover:text-pine-700">
+                        {room.name || `Habitación ${room.number}`}
+                      </a>
+                    </h3>
+                    {room.description && <p class="mt-5 max-w-md text-[17px] leading-relaxed text-ink-soft">{room.description}</p>}
+                    <ul class="mt-6 flex flex-wrap gap-2">
+                      {room.amenities.map((a) => (
+                        <li class="rounded-full border border-mist px-3 py-1 text-[13px] text-ink-soft">{AMENITIES[a]}</li>
+                      ))}
+                    </ul>
+                    <div class="mt-auto flex flex-wrap items-center gap-3 pt-10">
+                      <a href={`/reservar?room=${room.id}`} class="btn-press btn-arrow inline-flex h-12 items-center gap-2 rounded-full bg-pine-700 px-6 text-[15px] font-medium text-white hover:bg-pine-800">
+                        Reservar
+                        <svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" /></svg>
+                      </a>
+                      <a href={`/habitaciones/${room.slug}`} class="inline-flex h-12 items-center px-3 text-[15px] font-medium text-ink underline decoration-mist underline-offset-[6px] transition-colors hover:decoration-ink">
+                        Ver detalles
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div data-shade class="pointer-events-none absolute inset-0 bg-pine-900 opacity-0" aria-hidden="true" />
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+
+  <!-- ================= La casa ================= -->
+  <section id="la-casa" class="scroll-mt-16 bg-surface py-28 lg:py-40">
+    <div class="mx-auto grid max-w-[90rem] gap-16 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-24 lg:px-12">
+      <div class="lg:sticky lg:top-28 lg:self-start">
+        <h2 data-lines class="font-serif text-[clamp(2.8rem,5.5vw,5rem)] leading-[0.95] tracking-[-0.02em]">
+          <span class="line"><span>Lo que necesitas,</span></span>
+          <span class="line" style="--d:100"><span>sin cobros sorpresa.</span></span>
+        </h2>
+        <p data-reveal class="mt-6 max-w-md text-lg text-ink-soft" style="--d:150">
+          Lo básico ya está incluido. Lo adicional tiene precio fijo y lo ves en tu cotización antes de confirmar.
+        </p>
+
+        <ul class="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          {
+            [
+              { icon: ShowerHead, t: 'Agua caliente', d: 'En todas las duchas, a cualquier hora.' },
+              { icon: Wifi, t: 'Wi-Fi en cada habitación', d: 'Para trabajar o ver tus series sin cortes.' },
+              { icon: Sparkles, t: 'Limpieza diaria', d: 'Ropa de cama fresca en cada ingreso.' },
+              { icon: Clock, t: `Ingreso ${SITE.checkInTime}`, d: 'Coordinamos horarios especiales si hay espacio.' },
+            ].map((f, i) => (
+              <li data-reveal style={`--d:${i * 70}`}>
+                <f.icon class="size-5 text-pine-600" aria-hidden="true" />
+                <p class="mt-3 font-medium">{f.t}</p>
+                <p class="mt-1 text-[15px] text-ink-soft">{f.d}</p>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div data-reveal class="mt-12 rounded-[1.5rem] bg-stone p-6" style="--d:100">
+          <h3 class="font-medium">Servicios adicionales</h3>
+          <dl class="mt-3 divide-y divide-mist">
+            {
+              EXTRA_KEYS.map((k) => (
+                <div class="flex justify-between gap-4 py-3 text-[15px]">
+                  <dt class="text-ink-soft">{EXTRAS[k].label}</dt>
+                  <dd class="font-medium tabular">
+                    {formatMoney(EXTRAS[k].amountCents)}{' '}
+                    <span class="font-normal text-ink-muted">{EXTRAS[k].per === 'night' ? 'por noche' : 'por estadía'}</span>
+                  </dd>
+                </div>
+              ))
+            }
+          </dl>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-6 gap-4 sm:gap-5">
+        <figure data-tilt="5" class="col-span-6">
+          <div data-reveal="mask" class="overflow-hidden rounded-[1.75rem]">
+            <Image src={siteImage('detalle-desayuno')} alt="Desayuno con pan tostado, huevo frito y tomate" widths={[640, 960, 1280]} sizes="(min-width: 1024px) 50vw, 100vw" class="aspect-[16/10] w-full object-cover" />
+          </div>
+          <figcaption class="mt-3 text-sm text-ink-muted">Desayuno a pedido, {formatMoney(EXTRAS.desayuno.amountCents)} por noche.</figcaption>
+        </figure>
+        <figure data-tilt="6" class="col-span-3 sm:mt-16">
+          <div data-reveal="mask" class="overflow-hidden rounded-[1.75rem]" style="--d:120">
+            <Image src={siteImage('detalle-bano')} alt="Baño blanco con lavatorio y plantas" widths={[360, 540, 720]} sizes="(min-width: 1024px) 25vw, 50vw" class="aspect-[3/4] w-full object-cover" />
+          </div>
+          <figcaption class="mt-3 text-sm text-ink-muted">Baños con agua caliente.</figcaption>
+        </figure>
+        <figure data-tilt="6" class="col-span-3">
+          <div data-reveal="mask" class="overflow-hidden rounded-[1.75rem]" style="--d:220">
+            <Image src={roomImage('room-suite')} alt="Habitación matrimonial con cabecera tapizada y lámparas de mesa" widths={[360, 540, 720]} sizes="(min-width: 1024px) 25vw, 50vw" class="aspect-[3/4] w-full object-cover" />
+          </div>
+          <figcaption class="mt-3 text-sm text-ink-muted">Camas firmes y ropa de algodón.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Cómo reservar ================= -->
+  <section id="como-reservar" class="scroll-mt-16 bg-stone py-28 lg:py-40">
+    <div class="mx-auto max-w-[90rem] px-5 sm:px-8 lg:px-12">
+      <div class="flex flex-wrap items-end justify-between gap-8">
+        <h2 data-lines class="font-serif text-[clamp(2.8rem,6vw,5.5rem)] leading-[0.95] tracking-[-0.02em]">
+          <span class="line"><span>Reservar toma</span></span>
+          <span class="line" style="--d:100"><span>tres pasos.</span></span>
+        </h2>
+        <div data-reveal class="flex flex-wrap gap-3" style="--d:150">
+          <a href="/reservar" class="btn-press btn-arrow inline-flex h-12 items-center gap-2 rounded-full bg-pine-700 px-6 text-[15px] font-medium text-white hover:bg-pine-800">
+            Solicitar reserva
+            <svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+          </a>
+          <a href={whatsappLink(`Hola, quisiera consultar disponibilidad en ${SITE.name}.`)} target="_blank" rel="noopener" class="btn-press inline-flex h-12 items-center rounded-full border border-ink/15 px-6 text-[15px] font-medium hover:bg-surface">
+            Escribir por WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <ol class="mt-16 grid gap-12 md:grid-cols-3 md:gap-10 lg:mt-24">
+        {
+          [
+            { t: 'Envía tu solicitud', d: 'Elige fechas y habitación en la web y ves el precio al instante. También puedes escribirnos por WhatsApp.' },
+            { t: 'Separa con el 50%', d: 'Te confirmamos disponibilidad y envías el adelanto por Yape, Plin o transferencia. Te mandamos tu constancia.' },
+            { t: 'Llega y paga el saldo', d: 'Al ingresar completas el pago en efectivo, Yape, Plin o tarjeta. Tu habitación ya está lista.' },
+          ].map((s, i) => (
+            <li data-reveal style={`--d:${i * 120}`}>
+              <div class="flex items-center gap-4">
+                <span class="font-serif text-7xl leading-none text-pine-700 tabular">{i + 1}</span>
+                <span class="h-px flex-1 origin-left bg-ink/15" aria-hidden="true" />
+              </div>
+              <h3 class="mt-6 text-xl font-medium">{s.t}</h3>
+              <p class="mt-2 max-w-sm text-[16px] leading-relaxed text-ink-soft">{s.d}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- ================= Preguntas ================= -->
+  <section id="preguntas" class="scroll-mt-16 bg-surface py-28 lg:py-36">
+    <div class="mx-auto grid max-w-[90rem] gap-12 px-5 sm:px-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:px-12">
+      <h2 data-lines class="font-serif text-[clamp(2.6rem,5vw,4.5rem)] leading-[0.95] tracking-[-0.02em]">
+        <span class="line"><span>Preguntas</span></span>
+        <span class="line" style="--d:100"><span>frecuentes</span></span>
+      </h2>
+      <div class="divide-y divide-mist border-y border-mist">
+        {
+          faqs.map((f, i) => (
+            <details class="faq group" data-reveal style={`--d:${i * 60}`}>
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-6 text-[1.2rem] font-medium [&::-webkit-details-marker]:hidden">
+                {f.q}
+                <span class="relative grid size-9 shrink-0 place-items-center rounded-full border border-mist transition-colors group-open:border-pine-700 group-open:bg-pine-700" aria-hidden="true">
+                  <span class="absolute h-px w-3 bg-current transition-colors group-open:bg-white" />
+                  <span class="absolute h-3 w-px bg-current transition-transform duration-300 group-open:scale-y-0" />
+                </span>
+              </summary>
+              <p class="max-w-2xl pb-6 text-[17px] leading-relaxed text-ink-soft">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Cierre y ubicación ================= -->
+  <section id="ubicacion" class="relative isolate scroll-mt-16 overflow-hidden bg-pine-900 text-white">
+    <div class="absolute inset-0 -z-10" data-parallax="-0.08">
+      <Image src={roomImage('room-matrimonial')} alt="" widths={[768, 1280, 1920]} sizes="100vw" class="h-[120%] w-full object-cover opacity-55" />
+    </div>
+    <div class="absolute inset-0 -z-10 bg-gradient-to-t from-pine-900 via-pine-900/60 to-pine-900/20"></div>
+
+    <div class="mx-auto grid max-w-[90rem] gap-12 px-5 py-32 sm:px-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-end lg:px-12 lg:py-44">
+      <div>
+        <h2 data-lines class="font-serif text-[clamp(3rem,8vw,7.5rem)] leading-[0.9] tracking-[-0.02em]">
+          <span class="line"><span>Tu habitación</span></span>
+          <span class="line" style="--d:110"><span>está lista.</span></span>
+        </h2>
+        <div data-reveal class="mt-10 flex flex-wrap gap-3" style="--d:250">
+          <a href="/reservar" class="btn-press btn-arrow inline-flex h-14 items-center gap-2 rounded-full bg-marigold-500 px-7 text-[15px] font-semibold text-ink hover:bg-[#e3a43c]">
+            Solicitar reserva
+            <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+          </a>
+          <a href={whatsappLink(`Hola, quisiera consultar disponibilidad en ${SITE.name}.`)} target="_blank" rel="noopener" class="btn-press inline-flex h-14 items-center rounded-full border border-white/30 px-7 text-[15px] font-medium hover:bg-white/10">
+            Escribir por WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <div data-reveal class="glass rounded-[1.75rem] p-7" style="--d:300">
+        <h3 class="font-serif text-3xl">Cómo llegar</h3>
+        <p class="mt-3 text-white/85">{SITE.address}, {SITE.city}</p>
+        <p class="mt-2 text-[15px] text-white/70">¿Llegas en bus? Pide el recojo del terminal al reservar y te esperamos con tu nombre.</p>
+        {
+          SITE.mapEmbedUrl && (
+            <iframe src={SITE.mapEmbedUrl} title={`Mapa de ubicación de ${SITE.name}`} loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="mt-5 h-48 w-full rounded-2xl border-0" />
+          )
+        }
+        <div class="mt-6 flex flex-wrap gap-2">
+          <a href={SITE.mapLink} target="_blank" rel="noopener" class="btn-press inline-flex h-11 items-center rounded-full bg-white px-5 text-sm font-medium text-ink hover:bg-pine-50">Abrir en Google Maps</a>
+          <a href={`tel:+${SITE.whatsapp}`} class="btn-press inline-flex h-11 items-center rounded-full border border-white/30 px-5 text-sm font-medium hover:bg-white/10">Llamar</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</SiteLayout>

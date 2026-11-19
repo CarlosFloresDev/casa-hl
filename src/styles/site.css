@@ -1,0 +1,250 @@
+/*
+ * Estilos de movimiento del sitio público.
+ * Regla general: solo se animan transform, opacity y clip-path. Todo se desactiva
+ * (o queda en su estado final) con prefers-reduced-motion.
+ */
+
+/* ---------- Grano: rompe lo plano sin costo de rendimiento ---------- */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Lenis (scroll suave) ---------- */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ---------- Revelados al entrar en pantalla ---------- */
+/* Solo se ocultan si JS está activo (clase .js en <html>), así el contenido nunca queda invisible. */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 900ms var(--ease-out-strong),
+    transform 900ms var(--ease-out-strong);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+.js [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Imagen que se descubre de abajo hacia arriba */
+.js [data-reveal='mask'] {
+  opacity: 1;
+  transform: none;
+  clip-path: inset(100% 0 0 0 round 1.75rem);
+  transition: clip-path 1200ms var(--ease-in-out-strong);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+.js [data-reveal='mask'].is-in {
+  clip-path: inset(0 0 0 0 round 1.75rem);
+}
+.js [data-reveal='mask'] img {
+  transform: scale(1.15);
+  transition: transform 1600ms var(--ease-out-strong);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+.js [data-reveal='mask'].is-in img {
+  transform: scale(1);
+}
+
+/* ---------- Titulares línea por línea ---------- */
+.line {
+  display: block;
+  overflow: hidden;
+  /* espacio para descendentes de la serif */
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.line > span {
+  display: block;
+}
+.js [data-lines] .line > span {
+  transform: translateY(105%);
+  transition: transform 1100ms var(--ease-out-strong);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+.js [data-lines].is-in .line > span {
+  transform: none;
+}
+
+/* ---------- Texto que se "enciende" palabra por palabra con el scroll ---------- */
+.scrub-word {
+  opacity: var(--o, 1);
+  transition: opacity 200ms linear;
+}
+.js .scrub-word {
+  --o: 0.16;
+}
+
+/* ---------- Portada ---------- */
+.hero-media {
+  will-change: transform;
+}
+.hero-media img {
+  animation: hero-zoom 2600ms var(--ease-out-strong) both;
+}
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.14);
+    filter: saturate(0.7) brightness(0.85);
+  }
+}
+.hero-fade {
+  animation: hero-fade 1000ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* Panel de vidrio: borde interno de 1px + sombra interior que simula refracción */
+.glass {
+  background: rgb(255 255 255 / 0.1);
+  backdrop-filter: blur(18px) saturate(1.3);
+  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    inset 0 0 0 1px rgb(255 255 255 / 0.14),
+    0 30px 60px -20px rgb(8 24 20 / 0.55);
+}
+
+/* Indicador de scroll */
+.scroll-cue span {
+  animation: scroll-cue 2200ms var(--ease-in-out-strong) infinite;
+}
+@keyframes scroll-cue {
+  0% {
+    transform: translateY(-100%);
+  }
+  60%,
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+/* ---------- Tarjetas de habitación apiladas ---------- */
+.room-card {
+  transform-origin: 50% 0;
+  will-change: transform;
+}
+.room-card .room-img {
+  transition: transform 1200ms var(--ease-out-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .room-card:hover .room-img {
+    transform: scale(1.04);
+  }
+}
+
+/* Inclinación 3D (la controla JS con un resorte) */
+[data-tilt] {
+  transform-style: preserve-3d;
+  transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+}
+[data-tilt] [data-depth] {
+  transform: translateZ(calc(var(--depth, 0) * 1px));
+}
+
+/* ---------- Botones del sitio ---------- */
+.btn-press {
+  transition:
+    transform 160ms var(--ease-out-strong),
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+.btn-arrow svg {
+  transition: transform 260ms var(--ease-out-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-arrow:hover svg {
+    transform: translateX(3px);
+  }
+}
+
+/* Subrayado que crece en enlaces del menú */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.35rem;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 300ms var(--ease-out-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+/* ---------- Galería ---------- */
+.gallery-item img {
+  transition: transform 900ms var(--ease-out-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .gallery-item:hover img {
+    transform: scale(1.05);
+  }
+}
+
+/* ---------- Transiciones entre páginas ---------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--ease-out-strong);
+}
+::view-transition-group(*) {
+  animation-duration: 650ms;
+  animation-timing-function: var(--ease-in-out-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal],
+  .js [data-reveal='mask'],
+  .js [data-reveal='mask'] img,
+  .js [data-lines] .line > span {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+  .js .scrub-word {
+    --o: 1;
+  }
+  .hero-media img,
+  .hero-fade,
+  .scroll-cue span {
+    animation: none;
+  }
+  [data-tilt] {
+    transform: none;
+  }
+}

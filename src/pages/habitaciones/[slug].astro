@@ -1,0 +1,135 @@
+---
+import { Image } from 'astro:assets';
+import ArrowLeft from '@lucide/astro/icons/arrow-left';
+import Check from '@lucide/astro/icons/check';
+import Users from '@lucide/astro/icons/users';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import { SITE, whatsappLink } from '@/config/site';
+import { AMENITIES } from '@/lib/domain/catalog';
+import { addDays, todayIso } from '@/lib/domain/dates';
+import { formatMoney } from '@/lib/domain/money';
+import { roomImage } from '@/lib/images';
+import { getRoomBySlug, listPublicRooms } from '@/lib/server/rooms';
+
+const room = await getRoomBySlug(Astro.params.slug ?? '');
+if (!room || !room.published) return Astro.rewrite('/404');
+
+const others = (await listPublicRooms()).filter((r) => r.id !== room.id).slice(0, 3);
+const title = room.name || `Habitación ${room.number}`;
+const today = todayIso();
+
+const offer = {
+  '@context': 'https://schema.org',
+  '@type': 'HotelRoom',
+  name: title,
+  description: room.description,
+  occupancy: { '@type': 'QuantitativeValue', maxValue: room.capacity },
+  amenityFeature: room.amenities.map((a) => ({ '@type': 'LocationFeatureSpecification', name: AMENITIES[a], value: true })),
+  offers: { '@type': 'Offer', price: (room.priceCents / 100).toFixed(2), priceCurrency: 'PEN', unitText: 'noche' },
+};
+---
+
+<SiteLayout title={title} description={room.description || `${title} en ${SITE.name}. ${formatMoney(room.priceCents)} por noche.`} image={room.image} jsonLd={offer}>
+  <div class="mx-auto max-w-[90rem] px-5 pt-6 pb-24 sm:px-8 lg:px-12">
+    <a href="/#habitaciones" class="group inline-flex items-center gap-2 text-sm text-ink-muted transition-colors hover:text-ink">
+      <ArrowLeft class="size-4 transition-transform duration-300 group-hover:-translate-x-0.5" aria-hidden="true" /> Todas las habitaciones
+    </a>
+
+    <div class="mt-6 overflow-hidden rounded-[2rem]">
+      <Image
+        src={roomImage(room.image)}
+        alt={`${title}: vista de la habitación`}
+        widths={[768, 1280, 1920]}
+        sizes="(min-width: 1440px) 1360px, 100vw"
+        loading="eager"
+        fetchpriority="high"
+        class="aspect-[4/3] w-full object-cover sm:aspect-[16/9] lg:aspect-[21/9]"
+        transition:name={`room-${room.slug}`}
+      />
+    </div>
+
+    <div class="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-20">
+      <div>
+        <p class="hero-fade flex items-center gap-2 text-ink-muted" style="--d:200">
+          {room.type}
+          <span class="h-3 w-px bg-mist" aria-hidden="true"></span>
+          <Users class="size-4" aria-hidden="true" /> hasta {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
+        </p>
+        <h1 data-lines class="mt-3 font-serif text-[clamp(3.2rem,7vw,6.5rem)] leading-[0.92] tracking-[-0.02em]">
+          <span class="line" style="--d:250"><span>{title}</span></span>
+        </h1>
+        {room.description && <p class="hero-fade mt-6 max-w-xl text-xl leading-relaxed text-ink-soft" style="--d:450">{room.description}</p>}
+
+        <h2 class="hero-fade mt-12 text-sm text-ink-muted" style="--d:550">Incluye</h2>
+        <ul class="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          {
+            room.amenities.map((a, i) => (
+              <li class="hero-fade flex items-center gap-3 border-b border-mist pb-3 text-[17px]" style={`--d:${600 + i * 60}`}>
+                <Check class="size-4 text-pine-600" aria-hidden="true" /> {AMENITIES[a]}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <aside class="hero-fade lg:sticky lg:top-28 lg:self-start" style="--d:500">
+        <div class="rounded-[1.75rem] bg-pine-900 p-7 text-white shadow-[0_40px_80px_-40px_rgb(17_42_36/0.6)]">
+          <p class="text-sm text-pine-200">Precio por noche</p>
+          <p class="mt-1 font-serif text-6xl tabular">{formatMoney(room.priceCents)}</p>
+          <p class="mt-3 text-[15px] text-pine-200">Separas con el 50%. Ingreso desde las {SITE.checkInTime}, salida hasta las {SITE.checkOutTime}.</p>
+          <div class="mt-7 grid gap-2">
+            <a
+              href={`/reservar?room=${room.id}&checkIn=${today}&checkOut=${addDays(today, 1)}`}
+              class="btn-press btn-arrow inline-flex h-14 items-center justify-center gap-2 rounded-full bg-marigold-500 text-[15px] font-semibold text-ink hover:bg-[#e3a43c]"
+            >
+              Ver fechas y reservar
+              <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+            </a>
+            <a
+              href={whatsappLink(`Hola, quisiera consultar disponibilidad de la habitación "${title}" en ${SITE.name}.`)}
+              target="_blank"
+              rel="noopener"
+              class="btn-press inline-flex h-14 items-center justify-center rounded-full border border-white/25 text-[15px] font-medium hover:bg-white/10"
+            >
+              Consultar por WhatsApp
+            </a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    {
+      others.length > 0 && (
+        <section class="mt-32">
+          <h2 data-lines class="font-serif text-[clamp(2.4rem,4.5vw,4rem)] leading-none tracking-[-0.02em]">
+            <span class="line">
+              <span>Otras habitaciones</span>
+            </span>
+          </h2>
+          <ul class="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {others.map((o, i) => (
+              <li data-reveal style={`--d:${i * 90}`}>
+                <a href={`/habitaciones/${o.slug}`} class="gallery-item group block">
+                  <div class="overflow-hidden rounded-[1.5rem]">
+                    <Image
+                      src={roomImage(o.image)}
+                      alt=""
+                      widths={[400, 640, 800]}
+                      sizes="(min-width: 1024px) 30vw, (min-width: 640px) 50vw, 100vw"
+                      class="aspect-[4/3] w-full object-cover"
+                      transition:name={`room-${o.slug}`}
+                    />
+                  </div>
+                  <p class="mt-4 flex items-baseline justify-between gap-3">
+                    <span class="font-serif text-3xl transition-colors group-hover:text-pine-700">{o.name || `Habitación ${o.number}`}</span>
+                    <span class="text-ink-soft tabular">{formatMoney(o.priceCents)}</span>
+                  </p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</SiteLayout>

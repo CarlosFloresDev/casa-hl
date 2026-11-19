@@ -1,0 +1,31 @@
+# build
+dist/
+.astro/
+
+# deps
+node_modules/
+
+# entorno
+.env
+.env.*
+!.env.example
+
+# datos locales
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# logs / sistema
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+data/seed.sql

@@ -1,0 +1,27 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "casa-hl",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"compatibility_date": "2026-10-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./dist/client",
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "casa-hl",
+			"database_id": "c7ee28c6-0a37-43c6-8920-d9c4c5273206",
+			"migrations_dir": "../../drizzle",
+		},
+	],
+	"vars": {
+		"PUBLIC_SITE_URL": "https://casa-hl.chefsitturchey.workers.dev",
+	},
+	"observability": {
+		"enabled": true,
+	},
+}

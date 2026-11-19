@@ -1,0 +1,26 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import CashBook from '@/components/admin/finance/CashBook';
+import { calendarMonth } from '@/components/admin/calendar/month';
+import { monthStats } from '@/lib/server/stats';
+import { listExpenses } from '@/lib/server/expenses';
+const month = calendarMonth(Astro.url.searchParams.get('mes'));
+const [stats, expenses] = await Promise.all([
+  monthStats(month.year, month.month0),
+  listExpenses({ from: month.from, to: month.to }),
+]);
+---
+
+<AdminLayout
+  title="Caja chica"
+  section="finance"
+  description="Revisa los pagos recibidos y registra los gastos del hospedaje."
+>
+  <CashBook
+    client:load
+    month={month}
+    stats={stats}
+    expenses={expenses}
+    isAdmin={Astro.locals.user!.role === 'admin'}
+  />
+</AdminLayout>

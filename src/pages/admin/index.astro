@@ -1,0 +1,292 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import Plus from '@lucide/astro/icons/plus';
+import Calculator from '@lucide/astro/icons/calculator';
+import DoorOpen from '@lucide/astro/icons/door-open';
+import DoorClosed from '@lucide/astro/icons/door-closed';
+import BedDouble from '@lucide/astro/icons/bed-double';
+import Inbox from '@lucide/astro/icons/inbox';
+import { PAYMENT_METHODS, PAYMENT_METHOD_KEYS } from '@/lib/domain/catalog';
+import { formatDate, formatDateShort, formatMonth, formatWeekday, todayIso } from '@/lib/domain/dates';
+import { formatMoney } from '@/lib/domain/money';
+import { countNewInquiries } from '@/lib/server/inquiries';
+import { todayBoard, upcomingArrivals, type ReservationRow } from '@/lib/server/reservations';
+import { listRooms } from '@/lib/server/rooms';
+import { monthStats } from '@/lib/server/stats';
+
+const today = todayIso();
+const [year, month] = today.split('-').map(Number) as [number, number];
+
+const [board, upcoming, stats, rooms, newInquiries] = await Promise.all([
+  todayBoard(today),
+  upcomingArrivals(6, today),
+  monthStats(year, month - 1),
+  listRooms(),
+  countNewInquiries(),
+]);
+
+const occupiedIds = new Set(board.inHouse.map((r) => r.roomId));
+const freeRooms = rooms.filter((r) => !occupiedIds.has(r.id));
+const toCollectToday = board.arrivals.reduce((s, r) => s + r.balanceCents, 0);
+const user = Astro.locals.user!;
+const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/Lima' }).format(new Date()));
+const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+const maxMethod = Math.max(1, ...Object.values(stats.incomeByMethod));
+
+const link = (r: ReservationRow) => `/admin/reservas?ver=${r.id}`;
+---
+
+<AdminLayout
+  title={`${greeting}, ${user.name.split(' ')[0]}`}
+  section="dashboard"
+  description={`${formatWeekday(today)} ${formatDate(today)} · ${board.inHouse.length} ${board.inHouse.length === 1 ? 'habitación ocupada' : 'habitaciones ocupadas'} de ${rooms.length}`}
+>
+  <Fragment slot="actions">
+    <a href="/admin/cotizador" class="inline-flex h-10 items-center gap-2 rounded-xl border border-mist bg-surface px-4 text-sm font-medium [@media(pointer:fine)]:hover:bg-pine-50">
+      <Calculator class="size-4" aria-hidden="true" /> Cotizar
+    </a>
+    <a href="/admin/reservas?nueva=1" class="inline-flex h-10 items-center gap-2 rounded-xl bg-pine-700 px-4 text-sm font-medium text-white [@media(pointer:fine)]:hover:bg-pine-800">
+      <Plus class="size-4" aria-hidden="true" /> Nueva reserva
+    </a>
+  </Fragment>
+
+  {
+    newInquiries > 0 && (
+      <a
+        href="/admin/solicitudes"
+        class="mb-6 flex items-center gap-3 rounded-2xl border border-marigold-100 bg-marigold-50 px-4 py-3 text-sm text-marigold-700 [@media(pointer:fine)]:hover:border-marigold-500"
+      >
+        <Inbox class="size-5 shrink-0" aria-hidden="true" />
+        <span class="flex-1">
+          <strong class="font-semibold">
+            {newInquiries} {newInquiries === 1 ? 'solicitud nueva' : 'solicitudes nuevas'}
+          </strong>{' '}
+          desde el sitio web esperan respuesta.
+        </span>
+        <span class="font-medium underline-offset-2 [@media(pointer:fine)]:hover:underline">Revisar</span>
+      </a>
+    )
+  }
+
+  <!-- Hoy -->
+  <section aria-labelledby="hoy" class="admin-today grid gap-4 lg:grid-cols-3">
+    <h2 id="hoy" class="sr-only">Movimiento de hoy</h2>
+
+    <article class="rounded-[var(--radius-card)] border border-mist bg-surface p-5">
+      <header class="flex items-center justify-between">
+        <h3 class="flex items-center gap-2 font-medium"><DoorOpen class="size-[18px] text-pine-600" aria-hidden="true" /> Llegan hoy</h3>
+        <span class="font-display text-2xl font-semibold tabular">{board.arrivals.length}</span>
+      </header>
+      {
+        board.arrivals.length === 0 ? (
+          <p class="mt-4 text-sm text-ink-muted">No hay ingresos programados.</p>
+        ) : (
+          <ul class="mt-3 divide-y divide-mist">
+            {board.arrivals.map((r) => (
+              <li>
+                <a href={link(r)} class="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 [@media(pointer:fine)]:hover:bg-pine-50">
+                  <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-pine-50 text-sm font-semibold text-pine-700 tabular">{r.roomNumber}</span>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-medium">{r.guestName}</span>
+                    <span class="block text-xs text-ink-muted">
+                      {r.nights} {r.nights === 1 ? 'noche' : 'noches'} · {r.guests} {r.guests === 1 ? 'persona' : 'personas'}
+                    </span>
+                  </span>
+                  {r.balanceCents > 0 ? (
+                    <span class="text-right text-sm font-medium text-marigold-700 tabular">{formatMoney(r.balanceCents)}</span>
+                  ) : (
+                    <span class="text-xs text-pine-600">Pagado</span>
+                  )}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      {toCollectToday > 0 && <p class="mt-3 border-t border-mist pt-3 text-[13px] text-ink-muted">Por cobrar al ingresar: <strong class="text-marigold-700 tabular">{formatMoney(toCollectToday)}</strong></p>}
+    </article>
+
+    <article class="rounded-[var(--radius-card)] border border-mist bg-surface p-5">
+      <header class="flex items-center justify-between">
+        <h3 class="flex items-center gap-2 font-medium"><DoorClosed class="size-[18px] text-ink-soft" aria-hidden="true" /> Salen hoy</h3>
+        <span class="font-display text-2xl font-semibold tabular">{board.departures.length}</span>
+      </header>
+      {
+        board.departures.length === 0 ? (
+          <p class="mt-4 text-sm text-ink-muted">No hay salidas programadas.</p>
+        ) : (
+          <ul class="mt-3 divide-y divide-mist">
+            {board.departures.map((r) => (
+              <li>
+                <a href={link(r)} class="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 [@media(pointer:fine)]:hover:bg-pine-50">
+                  <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-stone text-sm font-semibold tabular">{r.roomNumber}</span>
+                  <span class="min-w-0 flex-1 truncate text-sm font-medium">{r.guestName}</span>
+                  {r.balanceCents > 0 && <span class="text-sm font-medium text-marigold-700 tabular">{formatMoney(r.balanceCents)}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </article>
+
+    <article class="rounded-[var(--radius-card)] border border-mist bg-surface p-5">
+      <header class="flex items-center justify-between">
+        <h3 class="flex items-center gap-2 font-medium"><BedDouble class="size-[18px] text-pine-600" aria-hidden="true" /> Libres esta noche</h3>
+        <span class="font-display text-2xl font-semibold tabular">{freeRooms.length}</span>
+      </header>
+      {
+        freeRooms.length === 0 ? (
+          <p class="mt-4 text-sm text-ink-muted">{rooms.length === 0 ? 'Registra tus habitaciones para empezar.' : 'Casa llena esta noche.'}</p>
+        ) : (
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {freeRooms.map((r) => (
+              <li>
+                <a
+                  href={`/admin/reservas?nueva=1&room=${r.id}&checkIn=${today}`}
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-pine-200 bg-pine-50 px-2.5 py-1.5 text-sm text-pine-800 [@media(pointer:fine)]:hover:border-pine-400"
+                  title={`Reservar ${r.number} desde hoy`}
+                >
+                  <span class="font-semibold tabular">{r.number}</span>
+                  <span class="text-pine-600">{formatMoney(r.priceCents)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </article>
+  </section>
+
+  <!-- Mes -->
+  <section aria-labelledby="mes" class="admin-month admin-card mt-8 rounded-[var(--radius-card)] border border-mist bg-surface" style="--step:3">
+    <header class="flex flex-wrap items-baseline justify-between gap-2 border-b border-mist px-5 py-4">
+      <h2 id="mes" class="font-display text-lg font-semibold first-letter:uppercase">{formatMonth(year, month - 1)}</h2>
+      <a href="/admin/caja" class="text-sm text-pine-700 [@media(pointer:fine)]:hover:underline">Ver caja del mes</a>
+    </header>
+    <div class="grid divide-y divide-mist md:grid-cols-[1.2fr_1fr] md:divide-x md:divide-y-0">
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
+        <div class="col-span-2 sm:col-span-3">
+          <dt class="text-sm text-ink-muted">Resultado del mes (cobrado − egresos)</dt>
+          <dd class:list={['admin-month-total font-display text-4xl font-semibold tabular', stats.netCents < 0 ? 'text-danger-500' : 'text-ink']}>
+            <span class="sr-only">{formatMoney(stats.netCents)}</span>
+            <span data-admin-count data-cents={stats.netCents} aria-hidden="true">{formatMoney(stats.netCents)}</span>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-[13px] text-ink-muted">Cobrado</dt>
+          <dd class="text-lg font-medium tabular">{formatMoney(stats.incomeCents)}</dd>
+        </div>
+        <div>
+          <dt class="text-[13px] text-ink-muted">Egresos</dt>
+          <dd class="text-lg font-medium tabular">{formatMoney(stats.expensesCents)}</dd>
+        </div>
+        <div>
+          <dt class="text-[13px] text-ink-muted">Ocupación</dt>
+          <dd class="text-lg font-medium tabular">{stats.occupancyPct}% <span class="text-[13px] font-normal text-ink-muted">· {stats.roomNightsSold} noches</span></dd>
+        </div>
+        <div class="col-span-2 sm:col-span-3">
+          <dt class="text-[13px] text-ink-muted">Saldos por cobrar (reservas activas)</dt>
+          <dd class="text-lg font-medium text-marigold-700 tabular">
+            {formatMoney(stats.pendingCents)} <span class="text-[13px] font-normal text-ink-muted">en {stats.pendingCount} {stats.pendingCount === 1 ? 'reserva' : 'reservas'}</span>
+          </dd>
+        </div>
+      </dl>
+      <div class="p-5">
+        <h3 class="mb-4 text-sm text-ink-muted">Cobrado por medio de pago</h3>
+        <ul class="space-y-3.5">
+          {
+            PAYMENT_METHOD_KEYS.map((k) => (
+              <li>
+                <div class="mb-1 flex justify-between text-sm">
+                  <span>{PAYMENT_METHODS[k]}</span>
+                  <span class="font-medium tabular">{formatMoney(stats.incomeByMethod[k])}</span>
+                </div>
+                <div class="h-2 overflow-hidden rounded-full bg-stone" aria-hidden="true">
+                  <div class="admin-payment-bar h-full rounded-full bg-pine-500" style={`--progress:${stats.incomeByMethod[k] / maxMethod}`} />
+                </div>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Próximas llegadas -->
+  <section aria-labelledby="proximas" class="admin-upcoming mt-8" style="--step:4">
+    <div class="mb-3 flex items-baseline justify-between">
+      <h2 id="proximas" class="font-display text-lg font-semibold">Próximas llegadas</h2>
+      <a href="/admin/calendario" class="text-sm text-pine-700 [@media(pointer:fine)]:hover:underline">Abrir calendario</a>
+    </div>
+    {
+      upcoming.length === 0 ? (
+        <p class="rounded-[var(--radius-card)] border border-dashed border-mist bg-surface px-5 py-6 text-sm text-ink-muted">
+          No hay reservas futuras confirmadas.
+        </p>
+      ) : (
+        <ul class="divide-y divide-mist overflow-hidden rounded-[var(--radius-card)] border border-mist bg-surface">
+          {upcoming.map((r) => (
+            <li>
+              <a href={link(r)} class="flex items-center gap-4 px-5 py-3 [@media(pointer:fine)]:hover:bg-pine-50/60">
+                <span class="w-16 shrink-0 text-center">
+                  <span class="block text-xs text-ink-muted">{formatWeekday(r.checkIn)}</span>
+                  <span class="block font-display text-lg leading-tight font-semibold">{formatDateShort(r.checkIn)}</span>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate font-medium">{r.guestName}</span>
+                  <span class="block text-[13px] text-ink-muted">
+                    Hab. {r.roomNumber} · {r.nights} {r.nights === 1 ? 'noche' : 'noches'} · {r.code}
+                  </span>
+                </span>
+                <span class="text-right text-sm tabular">
+                  {r.balanceCents > 0 ? (
+                    <>
+                      <span class="block font-medium text-marigold-700">{formatMoney(r.balanceCents)}</span>
+                      <span class="text-xs text-ink-muted">saldo</span>
+                    </>
+                  ) : (
+                    <span class="text-pine-600">Pagado</span>
+                  )}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+</AdminLayout>
+
+<script>
+  import { formatMoney } from '@/lib/domain/money';
+  let stopCount = () => {};
+  function animateTotal() {
+    stopCount();
+    const total = document.querySelector<HTMLElement>('[data-admin-count]');
+    if (!total) return;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const finalText = total.textContent ?? '';
+    const cents = Number(total.dataset.cents);
+    if (motion.matches || !Number.isFinite(cents) || cents === 0) return;
+    let frame = 0;
+    let start: number | undefined;
+    const finish = () => {
+      cancelAnimationFrame(frame);
+      total.textContent = finalText;
+      motion.removeEventListener('change', finish);
+    };
+    const tick = (time: number) => {
+      start ??= time;
+      const progress = Math.min((time - start) / 240, 1);
+      total.textContent = progress === 1 ? finalText : formatMoney(Math.round(cents * (1 - Math.pow(1 - progress, 3))));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+      else finish();
+    };
+    motion.addEventListener('change', finish);
+    stopCount = finish;
+    frame = requestAnimationFrame(tick);
+  }
+  document.addEventListener('astro:page-load', animateTotal);
+  document.addEventListener('astro:before-swap', () => stopCount());
+</script>

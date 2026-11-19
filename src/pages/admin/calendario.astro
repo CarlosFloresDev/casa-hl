@@ -1,0 +1,22 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import OccupancyCalendar from '@/components/admin/calendar/OccupancyCalendar';
+import { calendarMonth } from '@/components/admin/calendar/month';
+import { listRooms, roomLabel } from '@/lib/server/rooms';
+import { listOccupancy } from '@/lib/server/reservations';
+const month = calendarMonth(Astro.url.searchParams.get('mes'));
+const [rooms, reservations] = await Promise.all([listRooms(), listOccupancy(month.from, month.to)]);
+---
+
+<AdminLayout
+  title="Calendario"
+  section="calendar"
+  description="Consulta las noches ocupadas o elige una fecha libre para crear una reserva."
+>
+  <OccupancyCalendar
+    client:load
+    month={month}
+    rooms={rooms.map((r) => ({ id: r.id, label: roomLabel(r) }))}
+    reservations={reservations}
+  />
+</AdminLayout>

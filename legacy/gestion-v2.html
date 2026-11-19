@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casa Hospedaje H&L - Sistema Integral</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Navbar Header -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-600 text-white p-2.5 rounded-xl font-bold text-xl shadow-md shadow-emerald-900/50">
+                    <i class="fa-solid fa-hotel"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">Casa Hospedaje H&L</h1>
+                    <p class="text-xs text-slate-400">Control de Reservas, Cotizaciones, Caja Chica & Habitaciones</p>
+                </div>
+            </div>
+
+            <!-- Navegación -->
+            <nav class="flex flex-wrap gap-1 bg-slate-800 p-1 rounded-xl text-xs sm:text-sm font-medium">
+                <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Resumen</span>
+                </button>
+                <button onclick="switchTab('calendar')" id="btn-tab-calendar" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-days"></i> <span>Calendario</span>
+                </button>
+                <button onclick="switchTab('reservations')" id="btn-tab-reservations" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-bookmark"></i> <span>Reservas</span>
+                </button>
+                <button onclick="switchTab('quote')" id="btn-tab-quote" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-calculator"></i> <span>Cotizador</span>
+                </button>
+                <button onclick="switchTab('rooms')" id="btn-tab-rooms" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-bed"></i> <span>Habitaciones</span>
+                </button>
+                <button onclick="switchTab('finance')" id="btn-tab-finance" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-wallet"></i> <span>Caja Chica</span>
+                </button>
+            </nav>
+
+            <button onclick="openSecurityPinModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                <span>PIN Seguridad</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- ASISTENTE INTELIGENTE -->
+        <section class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-4 md:p-6 text-white shadow-xl border border-indigo-800/40">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-2xl text-white shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="font-bold text-lg">Asistente Virtual H&L</h2>
+                            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Activo
+                            </span>
+                        </div>
+                        <p class="text-xs text-indigo-200" id="ai-date-status">Generando reporte de estado...</p>
+                    </div>
+                </div>
+
+                <button onclick="runAiDiagnostic()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg transition shadow flex items-center gap-2">
+                    <i class="fa-solid fa-rotate"></i> Actualizar Estado
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 pt-4 border-t border-indigo-800/50 text-sm">
+                <div class="bg-slate-800/60 backdrop-blur rounded-xl p-3 border border-indigo-700/30">
+                    <span class="text-xs text-indigo-300 font-medium block mb-1">
+                        <i class="fa-solid fa-door-open text-emerald-400 mr-1"></i> Habitaciones Libres Hoy
+                    </span>
+                    <p class="font-bold text-white text-xs" id="ai-free-rooms">Cargando...</p>
+                </div>
+                <div class="bg-slate-800/60 backdrop-blur rounded-xl p-3 border border-indigo-700/30">
+                    <span class="text-xs text-indigo-300 font-medium block mb-1">
+                        <i class="fa-solid fa-hand-holding-dollar text-amber-400 mr-1"></i> Saldos Pendientes por Cobrar
+                    </span>
+                    <p class="font-bold text-white text-xs" id="ai-pending-payments">Cargando...</p>
+                </div>
+                <div class="bg-slate-800/60 backdrop-blur rounded-xl p-3 border border-indigo-700/30">
+                    <span class="text-xs text-indigo-300 font-medium block mb-1">
+                        <i class="fa-solid fa-vault text-emerald-400 mr-1"></i> Flujo Efectivo vs Yape/Plin
+                    </span>
+                    <p class="font-bold text-white text-xs" id="ai-cash-summary">Cargando...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 1: DASHBOARD -->
+        <div id="tab-dashboard" class="space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium uppercase">Ingresos Cobrados</p>
+                            <h3 class="text-2xl font-black text-slate-800 mt-1" id="kpi-total-ingresos">S/ 0.00</h3>
+                        </div>
+                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-money-bill-trend-up"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium uppercase">Por Cobrar en Check-in</p>
+                            <h3 class="text-2xl font-black text-amber-600 mt-1" id="kpi-total-pendiente">S/ 0.00</h3>
+                        </div>
+                        <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium uppercase">Egresos Totales</p>
+                            <h3 class="text-2xl font-black text-rose-600 mt-1" id="kpi-total-egresos">S/ 0.00</h3>
+                        </div>
+                        <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-slate-500 font-medium uppercase">Utilidad Neta Actual</p>
+                            <h3 class="text-2xl font-black text-emerald-700 mt-1" id="kpi-utilidad-neta">S/ 0.00</h3>
+                        </div>
+                        <div class="w-10 h-10 bg-emerald-50 text-emerald-700 rounded-xl flex items-center justify-center font-bold text-lg">
+                            <i class="fa-solid fa-piggy-bank"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Desglose por Método de Pago -->
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-credit-card text-emerald-600"></i> Desglose por Método de Pago
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
+                                    <i class="fa-solid fa-mobile-screen-button"></i>
+                                </div>
+                                <span class="font-medium text-sm text-slate-700">YAPE / PLIN</span>
+                            </div>
+                            <span class="font-bold text-slate-800" id="monto-yape">S/ 0.00</span>
+                        </div>
+
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <span class="font-medium text-sm text-slate-700">Efectivo Presencial</span>
+                            </div>
+                            <span class="font-bold text-slate-800" id="monto-efectivo">S/ 0.00</span>
+                        </div>
+
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                                    <i class="fa-solid fa-building-columns"></i>
+                                </div>
+                                <span class="font-medium text-sm text-slate-700">Transferencia Bancaria</span>
+                            </div>
+                            <span class="font-bold text-slate-800" id="monto-transferencia">S/ 0.00</span>
+                        </div>
+
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                </div>
+                                <span class="font-medium text-sm text-slate-700">Tarjeta POS</span>
+                            </div>
+                            <span class="font-bold text-slate-800" id="monto-tarjeta">S/ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accesos Rápidos -->
+                <div class="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-800 mb-1">Panel de Operaciones</h3>
+                        <p class="text-xs text-slate-500 mb-4">Gestiona reservas, adelantos del 50%, cotizaciones y gastos directos.</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button onclick="openNewReservationModal()" class="p-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition text-left flex items-center gap-3 shadow-md shadow-emerald-600/20">
+                                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-calendar-plus"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm">Nueva Reserva</div>
+                                    <div class="text-[11px] font-normal text-emerald-100">Con pago total o adelanto (50%)</div>
+                                </div>
+                            </button>
+
+                            <button onclick="switchTab('quote')" class="p-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition text-left flex items-center gap-3 shadow-md shadow-indigo-600/20">
+                                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-calculator"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm">Cotizar Estadía</div>
+                                    <div class="text-[11px] font-normal text-indigo-100">Generar propuesta formal por WhatsApp</div>
+                                </div>
+                            </button>
+
+                            <button onclick="openNewExpenseModal()" class="p-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold transition text-left flex items-center gap-3 shadow-md shadow-rose-600/20">
+                                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-minus-circle"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm">Registrar Egreso</div>
+                                    <div class="text-[11px] font-normal text-rose-100">Compras de insumos o servicios</div>
+                                </div>
+                            </button>
+
+                            <button onclick="switchTab('rooms')" class="p-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold transition text-left flex items-center gap-3">
+                                <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-bed"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm">Gestionar Habitaciones</div>
+                                    <div class="text-[11px] font-normal text-slate-300">Registrar cuartos y amenidades</div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CALENDARIO -->
+        <div id="tab-calendar" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-week text-emerald-600"></i> Calendario Visual de Ocupación
+                        </h2>
+                        <p class="text-xs text-slate-500">Haz clic en cualquier fecha libre para reservar esa habitación.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeMonth(-1)" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span id="calendar-month-year" class="font-bold text-slate-800 text-sm px-3">Septiembre 2026</span>
+                        <button onclick="changeMonth(1)" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <div id="calendar-container" class="min-w-[900px]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: RESERVAS -->
+        <div id="tab-reservations" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Histórico de Reservas y Pagos</h2>
+                    <p class="text-xs text-slate-500">Control de adelantos recibidos y liquidación de saldos al check-in.</p>
+                </div>
+                <button onclick="openNewReservationModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Nueva Reserva
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                                <th class="p-4 font-semibold">Huésped / DNI</th>
+                                <th class="p-4 font-semibold">Habitación</th>
+                                <th class="p-4 font-semibold">Fechas</th>
+                                <th class="p-4 font-semibold">Estado de Pago</th>
+                                <th class="p-4 font-semibold">Monto Total / Pendiente</th>
+                                <th class="p-4 font-semibold text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservations-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: COTIZADOR DE RESERVAS -->
+        <div id="tab-quote" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h2 class="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-indigo-600"></i> Generador de Cotizaciones
+                </h2>
+                <p class="text-xs text-slate-500 mb-6">Calcula tarifas por noches para una o más habitaciones, aplica descuentos opcionales y envía la propuesta por WhatsApp.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Formulario de Cotización -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Cliente / Interesado</label>
+                            <input type="text" id="quote-client" oninput="updateQuotePreview()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Carlos Mendoza">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono WhatsApp</label>
+                            <input type="text" id="quote-phone" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="951234567">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Seleccionar Habitación(es) a Cotizar</label>
+                            <div id="quote-rooms-container" class="border border-slate-300 rounded-xl p-3 max-h-40 overflow-y-auto space-y-2 bg-slate-50"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Entrada</label>
+                                <input type="date" id="quote-in" onchange="updateQuotePreview()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Salida</label>
+                                <input type="date" id="quote-out" onchange="updateQuotePreview()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">% Descuento Especial (Opcional)</label>
+                            <div class="relative">
+                                <input type="number" id="quote-discount" min="0" max="100" step="1" value="0" oninput="updateQuotePreview()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="0">
+                                <span class="absolute right-3 top-2 text-xs font-bold text-slate-400">%</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-2">Servicios Adicionales Incluidos</label>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50">
+                                    <input type="checkbox" id="srv-desayuno" onchange="updateQuotePreview()" value="Desayuno Continental (+S/ 15/día)" class="rounded text-indigo-600"> Desayuno (+S/ 15/día)
+                                </label>
+                                <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50">
+                                    <input type="checkbox" id="srv-cochera" onchange="updateQuotePreview()" value="Cochera Privada (+S/ 10/día)" class="rounded text-indigo-600"> Cochera (+S/ 10/día)
+                                </label>
+                                <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50">
+                                    <input type="checkbox" id="srv-recojo" onchange="updateQuotePreview()" value="Recojo del Terminal (+S/ 20 un solo pago)" class="rounded text-indigo-600"> Recojo Terminal (+S/ 20)
+                                </label>
+                                <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg cursor-pointer bg-slate-50">
+                                    <input type="checkbox" id="srv-toallas" onchange="updateQuotePreview()" value="Juego Extra de Toallas (+S/ 10 un solo pago)" class="rounded text-indigo-600"> Toallas Extra (+S/ 10)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vista Previa de la Cotización -->
+                    <div class="bg-slate-900 text-white p-6 rounded-2xl flex flex-col justify-between shadow-lg relative border border-slate-800">
+                        <div>
+                            <div class="border-b border-slate-700 pb-3 mb-4 flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-base text-emerald-400">Casa Hospedaje H&L</h3>
+                                    <p class="text-[11px] text-slate-400">Cotización Formal de Hospedaje</p>
+                                </div>
+                                <span class="bg-indigo-500/20 text-indigo-300 text-[10px] px-2 py-1 rounded-full font-semibold border border-indigo-500/30">Propuesta</span>
+                            </div>
+
+                            <div class="space-y-2 text-xs text-slate-300" id="quote-preview-content">
+                                <p class="text-slate-500 italic text-center py-8">Completa el formulario para generar la cotización...</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-slate-800 flex gap-2">
+                            <button onclick="sendQuoteWhatsApp()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                                <i class="fa-brands fa-whatsapp text-base"></i> Enviar por WhatsApp
+                            </button>
+                            <button onclick="convertQuoteToReservation()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-calendar-check"></i> Convertir en Reserva
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: HABITACIONES -->
+        <div id="tab-rooms" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Gestión de Habitaciones y Amenidades</h2>
+                    <p class="text-xs text-slate-500">Registra tus habitaciones desde cero indicando servicios incluidos (baño, TV, desayuno, cocina, etc.).</p>
+                </div>
+                <button onclick="openRoomModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Registrar Habitación
+                </button>
+            </div>
+
+            <div id="rooms-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- TAB 6: CAJA CHICA Y EGRESOS -->
+        <div id="tab-finance" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Control de Caja Chica y Gastos Operativos</h2>
+                    <p class="text-xs text-slate-500">Manejo de compras de insumos, artículos de limpieza, servicios y lavandería.</p>
+                </div>
+                <button onclick="openNewExpenseModal()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm px-4 py-2 rounded-xl transition flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Registrar Egreso
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200">
+                                <th class="p-4 font-semibold">Fecha</th>
+                                <th class="p-4 font-semibold">Concepto / Detalle</th>
+                                <th class="p-4 font-semibold">Categoría</th>
+                                <th class="p-4 font-semibold">Monto (S/)</th>
+                                <th class="p-4 font-semibold text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL RESERVA -->
+    <div id="modal-reservation" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4" id="modal-reservation-title">Registrar Nueva Reserva</h3>
+            
+            <form id="form-reservation" onsubmit="handleSaveReservation(event)" class="space-y-4">
+                <input type="hidden" id="res-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre Completo del Huésped</label>
+                    <input type="text" id="res-guest" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ej. Juan Pérez">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">DNI / Pasaporte</label>
+                        <input type="text" id="res-dni" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="70123456">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Teléfono</label>
+                        <input type="text" id="res-phone" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="951234567">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Habitación Asignada</label>
+                    <select id="res-room" required onchange="calculateReservationTotal()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white"></select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Check-In</label>
+                        <input type="date" id="res-checkin" required onchange="calculateReservationTotal()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Check-Out</label>
+                        <input type="date" id="res-checkout" required onchange="calculateReservationTotal()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">% Descuento Aplicado</label>
+                    <input type="number" id="res-discount" min="0" max="100" value="0" oninput="calculateReservationTotal()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-indigo-600 outline-none" placeholder="0">
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 space-y-3">
+                    <div class="flex justify-between items-center text-xs font-bold text-emerald-800">
+                        <span>Monto Total de la Estadía:</span>
+                        <span id="res-total-calculated">S/ 0.00</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-emerald-900 mb-1">Abono Inicial / Adelanto</label>
+                            <input type="number" step="0.01" id="res-paid-amount" oninput="updatePendingBalanceCalculated()" required class="w-full px-2.5 py-1.5 border border-emerald-300 rounded-lg text-sm font-bold text-emerald-800 bg-white outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-amber-900 mb-1">Saldo a Cobrar Check-in</label>
+                            <input type="text" id="res-pending-balance" readonly class="w-full px-2.5 py-1.5 border border-amber-300 rounded-lg text-sm font-bold text-amber-700 bg-amber-50 outline-none" value="S/ 0.00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Medio de Pago Utilizado</label>
+                        <select id="res-payment-method" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                            <option value="YAPE/PLIN">YAPE / PLIN</option>
+                            <option value="EFECTIVO">Efectivo</option>
+                            <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                            <option value="TARJETA">Tarjeta POS</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Estado del Pago</label>
+                        <select id="res-payment-status" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                            <option value="PARCIAL">50% Adelanto (Pendiente Saldo)</option>
+                            <option value="COMPLETO">Pago 100% Completo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-reservation')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition">Guardar Reserva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL HABITACIÓN CON AMENIDADES -->
+    <div id="modal-room" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-lg font-bold text-slate-800 mb-4" id="modal-room-title">Registrar Habitación</h3>
+            
+            <form id="form-room" onsubmit="handleSaveRoom(event)" class="space-y-4">
+                <input type="hidden" id="room-id">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Número o Nombre</label>
+                        <input type="text" id="room-number" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ej. 101 o Mini-Dept 01">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Piso</label>
+                        <input type="number" id="room-floor" required min="1" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="1">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Habitación</label>
+                    <select id="room-type" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                        <option value="Simple / Individual">Simple / Individual</option>
+                        <option value="Matrimonial">Matrimonial</option>
+                        <option value="Doble Cama">Doble Cama</option>
+                        <option value="Triple / Familiar">Triple / Familiar</option>
+                        <option value="Minidepartamento">Minidepartamento</option>
+                        <option value="Departamento Completo">Departamento Completo</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Precio por Noche (S/)</label>
+                    <input type="number" step="0.01" id="room-price" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 border-emerald-200 outline-none" placeholder="70.00">
+                </div>
+
+                <!-- Detalles y Amenidades Incluidas -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">Servicios y Detalles Incluidos</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="amenity-bathroom-private" class="rounded text-emerald-600"> Baño Privado c/ Agua Caliente
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="amenity-bathroom-shared" class="rounded text-emerald-600"> Baño Compartido c/ Agua Caliente
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="amenity-tv" class="rounded text-emerald-600"> TV Cable / Smart TV
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="amenity-kitchen" class="rounded text-emerald-600"> Cocina Equipada
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="amenity-breakfast" class="rounded text-emerald-600"> Desayuno Incluido
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="amenity-towels" class="rounded text-emerald-600"> Toallas y Kit de Aseo
+                        </label>
+                        <label class="flex items-center gap-2 p-2 border border-slate-200 rounded-lg bg-slate-50 cursor-pointer">
+                            <input type="checkbox" id="amenity-wifi" class="rounded text-emerald-600" checked> Wi-Fi de Alta Velocidad
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Notas / Detalles Adicionales</label>
+                    <input type="text" id="room-notes" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Ej. Vista a la calle, cama Queen size">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-room')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition">Guardar Habitación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EGRESO -->
+    <div id="modal-expense" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <h3 class="text-lg font-bold text-slate-800 mb-4" id="modal-expense-title">Registrar Egreso</h3>
+            
+            <form id="form-expense" onsubmit="handleSaveExpense(event)" class="space-y-4">
+                <input type="hidden" id="exp-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Concepto / Descripción</label>
+                    <input type="text" id="exp-concept" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 outline-none" placeholder="Ej. Compras de detergente y jabón líquido">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Categoría</label>
+                        <select id="exp-category" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 outline-none bg-white">
+                            <option value="Limpieza e Insumos">Limpieza e Insumos</option>
+                            <option value="Servicios Básicos">Servicios Básicos</option>
+                            <option value="Mantenimiento">Mantenimiento</option>
+                            <option value="Lavandería">Lavandería</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Monto (S/)</label>
+                        <input type="number" step="0.01" id="exp-amount" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold text-rose-600 bg-rose-50 border-rose-200 outline-none" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha</label>
+                    <input type="date" id="exp-date" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-expense')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition">Guardar Egreso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SEGURIDAD PIN -->
+    <div id="modal-pin" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-6 shadow-2xl text-center border border-slate-100">
+            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-xl mb-3">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">Acción Protegida</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-4">Ingresa tu clave PIN de 4 dígitos para autorizar esta operación.</p>
+
+            <input type="password" id="pin-input" maxlength="4" class="w-32 text-center text-2xl font-black tracking-widest py-2 border-2 border-slate-300 rounded-xl outline-none focus:border-amber-500 mb-4">
+
+            <div class="flex gap-2">
+                <button onclick="closeModal('modal-pin')" class="flex-1 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Cancelar</button>
+                <button onclick="verifyPinAction()" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-900 text-white transition">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL COMPROBANTE DE PAGO -->
+    <div id="modal-receipt" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-slate-800" id="printable-area">
+            <div class="text-center border-b border-dashed border-slate-300 pb-4 mb-4">
+                <div class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center text-lg font-bold mx-auto mb-1">H&L</div>
+                <h2 class="font-black text-lg text-slate-900">Casa Hospedaje H&L</h2>
+                <p class="text-[11px] text-slate-500">Comprobante de Reserva / Hospedaje</p>
+                <p class="text-[10px] text-emerald-700 font-bold mt-1" id="receipt-code">N° RES-0000</p>
+            </div>
+            
+            <div class="space-y-2.5 text-xs" id="receipt-details"></div>
+
+            <div class="mt-6 border-t border-dashed border-slate-300 pt-3 text-center text-[10px] text-slate-400">
+                <p>¡Muchas gracias por su preferencia!</p>
+                <p class="font-medium mt-0.5">Casa Hospedaje H&L</p>
+            </div>
+
+            <div class="mt-5 flex gap-2 print:hidden">
+                <button onclick="closeModal('modal-receipt')" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-semibold">Cerrar</button>
+                <button onclick="window.print()" class="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LÓGICA JS COMPLETA -->
+    <script>
+        const DEFAULT_PIN = "1234";
+
+        let parsedRooms = JSON.parse(localStorage.getItem('hl_rooms')) || [];
+        if (!Array.isArray(parsedRooms)) parsedRooms = [];
+        parsedRooms = parsedRooms.filter(r => r && r.id && r.number);
+
+        let parsedReservations = JSON.parse(localStorage.getItem('hl_reservations')) || [];
+        if (!Array.isArray(parsedReservations)) parsedReservations = [];
+
+        let parsedExpenses = JSON.parse(localStorage.getItem('hl_expenses')) || [];
+        if (!Array.isArray(parsedExpenses)) parsedExpenses = [];
+
+        let appData = {
+            pin: localStorage.getItem('hl_pin') || DEFAULT_PIN,
+            rooms: parsedRooms,
+            reservations: parsedReservations,
+            expenses: parsedExpenses
+        };
+
+        let currentCalendarDate = new Date();
+        let pendingPinCallback = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            saveData();
+            renderDashboard();
+            renderCalendar();
+            renderReservations();
+            renderRooms();
+            renderExpenses();
+            updateQuoteRoomOptions();
+            runAiDiagnostic();
+        });
+
+        function saveData() {
+            localStorage.setItem('hl_pin', appData.pin);
+            localStorage.setItem('hl_rooms', JSON.stringify(appData.rooms));
+            localStorage.setItem('hl_reservations', JSON.stringify(appData.reservations));
+            localStorage.setItem('hl_expenses', JSON.stringify(appData.expenses));
+        }
+
+        function switchTab(tabId) {
+            ['dashboard', 'calendar', 'reservations', 'quote', 'rooms', 'finance'].forEach(t => {
+                const element = document.getElementById(`tab-${t}`);
+                if (element) element.classList.add('hidden');
+                
+                const btn = document.getElementById(`btn-tab-${t}`);
+                if (btn) {
+                    btn.classList.remove('bg-emerald-600', 'text-white');
+                    btn.classList.add('text-slate-300');
+                }
+            });
+
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+
+            const activeBtn = document.getElementById(`btn-tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-emerald-600', 'text-white');
+                activeBtn.classList.remove('text-slate-300');
+            }
+
+            if (tabId === 'calendar') renderCalendar();
+            if (tabId === 'quote') updateQuoteRoomOptions();
+        }
+
+        // --- DASHBOARD / KPIS ---
+        function renderDashboard() {
+            let totalCobrado = 0;
+            let totalPendiente = 0;
+            let yape = 0, efectivo = 0, transferencia = 0, tarjeta = 0;
+
+            appData.reservations.forEach(r => {
+                const paid = parseFloat(r.paidAmount) || 0;
+                const pending = parseFloat(r.pendingBalance) || 0;
+
+                totalCobrado += paid;
+                totalPendiente += pending;
+
+                if (r.paymentMethod === 'YAPE/PLIN') yape += paid;
+                else if (r.paymentMethod === 'EFECTIVO') efectivo += paid;
+                else if (r.paymentMethod === 'TRANSFERENCIA') transferencia += paid;
+                else if (r.paymentMethod === 'TARJETA') tarjeta += paid;
+            });
+
+            let totalEgresos = appData.expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+            let utilidadNeta = totalCobrado - totalEgresos;
+
+            document.getElementById('kpi-total-ingresos').innerText = `S/ ${totalCobrado.toFixed(2)}`;
+            document.getElementById('kpi-total-pendiente').innerText = `S/ ${totalPendiente.toFixed(2)}`;
+            document.getElementById('kpi-total-egresos').innerText = `S/ ${totalEgresos.toFixed(2)}`;
+            document.getElementById('kpi-utilidad-neta').innerText = `S/ ${utilidadNeta.toFixed(2)}`;
+
+            document.getElementById('monto-yape').innerText = `S/ ${yape.toFixed(2)}`;
+            document.getElementById('monto-efectivo').innerText = `S/ ${efectivo.toFixed(2)}`;
+            document.getElementById('monto-transferencia').innerText = `S/ ${transferencia.toFixed(2)}`;
+            document.getElementById('monto-tarjeta').innerText = `S/ ${tarjeta.toFixed(2)}`;
+        }
+
+        // --- ASISTENTE INTELIGENTE ---
+        function runAiDiagnostic() {
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            document.getElementById('ai-date-status').innerText = `Estado al: ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+            let freeRooms = [];
+            appData.rooms.forEach(room => {
+                if (!room || !room.id) return;
+                const isOccupied = appData.reservations.some(r => r.roomId === room.id && todayStr >= r.checkIn && todayStr < r.checkOut);
+                if (!isOccupied) freeRooms.push(`Hab. ${room.number}`);
+            });
+
+            document.getElementById('ai-free-rooms').innerText = freeRooms.length > 0 ? freeRooms.join(', ') : 'Todas las habitaciones ocupadas o sin registrar.';
+
+            let pendingCount = appData.reservations.filter(r => (r.pendingBalance || 0) > 0).length;
+            let pendingTotal = appData.reservations.reduce((sum, r) => sum + (parseFloat(r.pendingBalance) || 0), 0);
+
+            document.getElementById('ai-pending-payments').innerText = pendingCount > 0 ? `${pendingCount} reservas con cobro pendiente (Total: S/ ${pendingTotal.toFixed(2)})` : 'Todos los pagos al día.';
+
+            let ef = appData.reservations.reduce((s, r) => r.paymentMethod === 'EFECTIVO' ? s + (parseFloat(r.paidAmount) || 0) : s, 0);
+            let yp = appData.reservations.reduce((s, r) => r.paymentMethod === 'YAPE/PLIN' ? s + (parseFloat(r.paidAmount) || 0) : s, 0);
+
+            document.getElementById('ai-cash-summary').innerText = `Caja Efectivo: S/ ${ef.toFixed(2)} | Yape/Plin: S/ ${yp.toFixed(2)}`;
+        }
+
+        // --- CALENDARIO VISUAL ---
+        function renderCalendar() {
+            const container = document.getElementById('calendar-container');
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            let html = `<div class="bg-slate-800 text-white font-bold text-xs py-2 px-3 border-b border-slate-700">Habitación</div>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                html += `<div class="bg-slate-800 text-white text-center font-bold text-xs py-2 border-b border-slate-700 border-l border-slate-700/50">${d}</div>`;
+            }
+
+            if (!appData.rooms || appData.rooms.length === 0) {
+                container.style.display = 'block';
+                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs">No hay habitaciones registradas. Agrega una en la sección "Habitaciones".</div>`;
+                return;
+            }
+
+            appData.rooms.forEach(room => {
+                if (!room || !room.id) return;
+                html += `<div class="p-2 font-bold text-xs bg-slate-50 border-b border-slate-200 text-slate-700 flex flex-col justify-center">
+                            <span>Hab. ${room.number}</span>
+                            <span class="text-[9px] font-normal text-slate-400 truncate">${room.type}</span>
+                         </div>`;
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dayStr = d < 10 ? `0${d}` : `${d}`;
+                    const monthStr = (month + 1) < 10 ? `0${month + 1}` : `${month + 1}`;
+                    const currentDateStr = `${year}-${monthStr}-${dayStr}`;
+
+                    const res = appData.reservations.find(r => r.roomId === room.id && currentDateStr >= r.checkIn && currentDateStr <= r.checkOut);
+
+                    let cellBg = 'bg-emerald-100 hover:bg-emerald-200 border-emerald-200 text-emerald-800 cursor-pointer';
+                    let label = '';
+
+                    if (res) {
+                        if (res.checkOut === currentDateStr) {
+                            cellBg = 'bg-amber-100 border-amber-300 text-amber-900';
+                            label = '🚪';
+                        } else {
+                            cellBg = 'bg-rose-100 border-rose-300 text-rose-900';
+                            label = '👤';
+                        }
+                    }
+
+                    html += `<div onclick="quickReserveFromCalendar('${room.id}', '${currentDateStr}')" class="${cellBg} border-b border-l border-slate-200 text-[10px] flex items-center justify-center font-semibold transition">
+                                ${label}
+                             </div>`;
+                }
+            });
+
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = `120px repeat(${daysInMonth}, minmax(30px, 1fr))`;
+            container.innerHTML = html;
+        }
+
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function quickReserveFromCalendar(roomId, dateStr) {
+            openNewReservationModal();
+            document.getElementById('res-room').value = roomId;
+            document.getElementById('res-checkin').value = dateStr;
+            calculateReservationTotal();
+        }
+
+        // --- GESTIÓN DE RESERVAS ---
+        function renderReservations() {
+            const tbody = document.getElementById('reservations-table-body');
+            if (appData.reservations.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 text-xs">No hay reservas registradas.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = appData.reservations.map(res => {
+                const room = appData.rooms.find(r => r && r.id === res.roomId);
+                const roomLabel = room ? `Hab. ${room.number}` : '(Cuarto Eliminado)';
+
+                const paidAmount = parseFloat(res.paidAmount) || 0;
+                const totalAmount = parseFloat(res.totalAmount) || 0;
+                const pendingBalance = parseFloat(res.pendingBalance) || 0;
+
+                const isPending = pendingBalance > 0;
+                const statusBadge = isPending 
+                    ? `<span class="px-2 py-1 bg-amber-100 text-amber-800 border border-amber-200 text-[11px] rounded-lg font-bold">50% Adelanto (S/ ${paidAmount.toFixed(2)})</span>`
+                    : `<span class="px-2 py-1 bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] rounded-lg font-bold">100% Pagado</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-4">
+                            <div class="font-bold text-slate-800">${res.guestName}</div>
+                            <div class="text-xs text-slate-400">DNI: ${res.dni || 'N/A'} - Tel: ${res.phone || 'N/A'}</div>
+                        </td>
+                        <td class="p-4 font-semibold text-emerald-700">${roomLabel}</td>
+                        <td class="p-4 text-xs font-medium text-slate-600">${res.checkIn} ➔ ${res.checkOut}</td>
+                        <td class="p-4">${statusBadge}</td>
+                        <td class="p-4">
+                            <div class="font-bold text-slate-800">Total: S/ ${totalAmount.toFixed(2)}</div>
+                            ${isPending ? `<div class="text-xs font-bold text-amber-600">Pendiente: S/ ${pendingBalance.toFixed(2)}</div>` : '<div class="text-xs text-emerald-600 font-medium">Saldado</div>'}
+                        </td>
+                        <td class="p-4 text-right space-x-1">
+                            ${isPending ? `<button onclick="completeCheckInPayment('${res.id}')" title="Completar Pago Check-in" class="p-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition font-bold text-xs"><i class="fa-solid fa-hand-holding-dollar"></i> Cobrar Saldo</button>` : ''}
+                            <button onclick="printReceipt('${res.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i class="fa-solid fa-print"></i></button>
+                            <button onclick="requestDeleteReservation('${res.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openNewReservationModal() {
+            document.getElementById('form-reservation').reset();
+            document.getElementById('res-id').value = '';
+            document.getElementById('res-discount').value = '0';
+            
+            const roomSelect = document.getElementById('res-room');
+            if (!appData.rooms || appData.rooms.length === 0) {
+                roomSelect.innerHTML = `<option value="">Registra primero una habitación...</option>`;
+            } else {
+                roomSelect.innerHTML = appData.rooms.map(r => `<option value="${r.id}">Habitación ${r.number} - ${r.type} (S/ ${parseFloat(r.price).toFixed(2)}/noche)</option>`).join('');
+            }
+
+            document.getElementById('modal-reservation').classList.remove('hidden');
+        }
+
+        function calculateReservationTotal() {
+            const roomId = document.getElementById('res-room').value;
+            const inDate = new Date(document.getElementById('res-checkin').value);
+            const outDate = new Date(document.getElementById('res-checkout').value);
+            const discount = parseFloat(document.getElementById('res-discount').value) || 0;
+
+            const room = appData.rooms.find(r => r && r.id === roomId);
+            if (room && !isNaN(inDate) && !isNaN(outDate) && outDate > inDate) {
+                const nights = Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24));
+                let total = nights * (parseFloat(room.price) || 0);
+
+                if (discount > 0) {
+                    total -= total * (discount / 100);
+                }
+
+                document.getElementById('res-total-calculated').innerText = `S/ ${total.toFixed(2)}`;
+
+                document.getElementById('res-paid-amount').value = (total / 2).toFixed(2);
+                updatePendingBalanceCalculated();
+            }
+        }
+
+        function updatePendingBalanceCalculated() {
+            const totalText = document.getElementById('res-total-calculated').innerText.replace('S/ ', '');
+            const total = parseFloat(totalText) || 0;
+            const paid = parseFloat(document.getElementById('res-paid-amount').value) || 0;
+
+            const pending = Math.max(0, total - paid);
+            document.getElementById('res-pending-balance').value = `S/ ${pending.toFixed(2)}`;
+
+            if (pending === 0) {
+                document.getElementById('res-payment-status').value = 'COMPLETO';
+            } else {
+                document.getElementById('res-payment-status').value = 'PARCIAL';
+            }
+        }
+
+        function handleSaveReservation(e) {
+            e.preventDefault();
+            const roomId = document.getElementById('res-room').value;
+            if (!roomId) {
+                alert('Debes seleccionar una habitación válida.');
+                return;
+            }
+
+            const totalText = document.getElementById('res-total-calculated').innerText.replace('S/ ', '');
+            const totalAmount = parseFloat(totalText) || 0;
+            const paidAmount = parseFloat(document.getElementById('res-paid-amount').value) || 0;
+            const pendingBalance = Math.max(0, totalAmount - paidAmount);
+
+            const resData = {
+                id: 'RES-' + Math.floor(1000 + Math.random() * 9000),
+                guestName: document.getElementById('res-guest').value,
+                dni: document.getElementById('res-dni').value,
+                phone: document.getElementById('res-phone').value,
+                roomId: roomId,
+                checkIn: document.getElementById('res-checkin').value,
+                checkOut: document.getElementById('res-checkout').value,
+                paymentMethod: document.getElementById('res-payment-method').value,
+                paymentStatus: document.getElementById('res-payment-status').value,
+                totalAmount: totalAmount,
+                paidAmount: paidAmount,
+                pendingBalance: pendingBalance
+            };
+
+            appData.reservations.push(resData);
+            saveData();
+            renderDashboard();
+            renderCalendar();
+            renderReservations();
+            runAiDiagnostic();
+            closeModal('modal-reservation');
+        }
+
+        function completeCheckInPayment(resId) {
+            const res = appData.reservations.find(r => r.id === resId);
+            if (!res) return;
+
+            const pending = parseFloat(res.pendingBalance) || 0;
+            if (confirm(`¿Confirmar cobro del saldo pendiente de S/ ${pending.toFixed(2)} al realizar el Check-In a ${res.guestName}?`)) {
+                res.paidAmount = (parseFloat(res.paidAmount) || 0) + pending;
+                res.pendingBalance = 0;
+                res.paymentStatus = 'COMPLETO';
+                saveData();
+                renderDashboard();
+                renderCalendar();
+                renderReservations();
+                runAiDiagnostic();
+            }
+        }
+
+        function requestDeleteReservation(id) {
+            requireSecurityPin(() => {
+                appData.reservations = appData.reservations.filter(r => r.id !== id);
+                saveData();
+                renderDashboard();
+                renderCalendar();
+                renderReservations();
+                runAiDiagnostic();
+            });
+        }
+
+        // --- COTIZADOR MULTI-HABITACIÓN ---
+        function updateQuoteRoomOptions() {
+            const container = document.getElementById('quote-rooms-container');
+            if (!appData.rooms || appData.rooms.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 italic">No hay habitaciones disponibles...</p>`;
+            } else {
+                container.innerHTML = appData.rooms.map(r => `
+                    <label class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 cursor-pointer text-xs">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" value="${r.id}" class="quote-room-checkbox rounded text-indigo-600" onchange="updateQuotePreview()">
+                            <span class="font-bold text-slate-700">Hab. ${r.number}</span>
+                            <span class="text-slate-500">(${r.type})</span>
+                        </div>
+                        <span class="font-semibold text-emerald-600">S/ ${parseFloat(r.price).toFixed(2)}/noche</span>
+                    </label>
+                `).join('');
+            }
+            updateQuotePreview();
+        }
+
+        function getSelectedQuoteRooms() {
+            const checkboxes = document.querySelectorAll('.quote-room-checkbox:checked');
+            const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+            return appData.rooms.filter(r => r && selectedIds.includes(r.id));
+        }
+
+        function updateQuotePreview() {
+            const client = document.getElementById('quote-client').value || 'Cliente Interesado';
+            const selectedRooms = getSelectedQuoteRooms();
+            const inDate = new Date(document.getElementById('quote-in').value);
+            const outDate = new Date(document.getElementById('quote-out').value);
+            const discountPct = parseFloat(document.getElementById('quote-discount').value) || 0;
+
+            const previewContainer = document.getElementById('quote-preview-content');
+
+            if (selectedRooms.length === 0 || isNaN(inDate) || isNaN(outDate) || outDate <= inDate) {
+                previewContainer.innerHTML = `<p class="text-slate-500 italic text-center py-8">Selecciona la(s) habitación(es) y fechas válidas para ver la cotización...</p>`;
+                return;
+            }
+
+            const nights = Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24));
+            
+            let roomsBaseTotal = 0;
+            let roomsDetailHtml = selectedRooms.map(r => {
+                const sub = nights * parseFloat(r.price || 0);
+                roomsBaseTotal += sub;
+                return `<li class="flex justify-between"><span>• Hab. ${r.number} (${r.type}):</span> <strong>S/ ${sub.toFixed(2)}</strong></li>`;
+            }).join('');
+
+            let discountAmount = 0;
+            if (discountPct > 0) {
+                discountAmount = roomsBaseTotal * (discountPct / 100);
+            }
+            const roomsFinalTotal = roomsBaseTotal - discountAmount;
+
+            let extrasTotal = 0;
+            let extrasList = [];
+
+            if (document.getElementById('srv-desayuno').checked) { extrasTotal += 15 * nights; extrasList.push('Desayuno Continental'); }
+            if (document.getElementById('srv-cochera').checked) { extrasTotal += 10 * nights; extrasList.push('Cochera Privada'); }
+            if (document.getElementById('srv-recojo').checked) { extrasTotal += 20; extrasList.push('Recojo del Terminal'); }
+            if (document.getElementById('srv-toallas').checked) { extrasTotal += 10; extrasList.push('Juego de Toallas Extra'); }
+
+            const grandTotal = roomsFinalTotal + extrasTotal;
+            const advanceRequired = grandTotal * 0.5;
+
+            previewContainer.innerHTML = `
+                <p><span class="text-slate-400">Atención a:</span> <strong class="text-white">${client}</strong></p>
+                <p><span class="text-slate-400">Estadía:</span> <strong>${nights} Noche(s)</strong> (${document.getElementById('quote-in').value} ➔ ${document.getElementById('quote-out').value})</p>
+                <div class="mt-2">
+                    <span class="text-slate-400 font-semibold block mb-1">Habitación(es) seleccionada(s):</span>
+                    <ul class="space-y-1 pl-1 text-[11px] border-l-2 border-indigo-500/50">
+                        ${roomsDetailHtml}
+                    </ul>
+                </div>
+                ${discountPct > 0 ? `<p class="mt-2 text-indigo-300"><span class="text-slate-400">Descuento (${discountPct}\%):</span> -S/ ${discountAmount.toFixed(2)}</p>` : ''}
+                ${extrasList.length > 0 ? `<p class="mt-2"><span class="text-slate-400">Servicios Extra:</span> ${extrasList.join(', ')} (S/ ${extrasTotal.toFixed(2)})</p>` : ''}
+                
+                <div class="mt-4 pt-3 border-t border-slate-800 space-y-1">
+                    <div class="flex justify-between text-sm font-black text-white"><span>Total Cotizado:</span> <span class="text-emerald-400">S/ ${grandTotal.toFixed(2)}</span></div>
+                    <div class="flex justify-between text-xs font-bold text-amber-400"><span>Adelanto para Reserva (50%):</span> <span>S/ ${advanceRequired.toFixed(2)}</span></div>
+                </div>
+            `;
+        }
+
+        function sendQuoteWhatsApp() {
+            const phone = document.getElementById('quote-phone').value;
+            const client = document.getElementById('quote-client').value || 'Estimado(a)';
+            const selectedRooms = getSelectedQuoteRooms();
+
+            if (selectedRooms.length === 0) {
+                alert('Selecciona al menos una habitación para cotizar.');
+                return;
+            }
+
+            const inDate = document.getElementById('quote-in').value;
+            const outDate = document.getElementById('quote-out').value;
+            const discountPct = parseFloat(document.getElementById('quote-discount').value) || 0;
+
+            const nights = Math.ceil((new Date(outDate) - new Date(inDate)) / (1000 * 60 * 60 * 24));
+            
+            let roomSummary = selectedRooms.map(r => `• Hab. ${r.number} (${r.type}) - S/ ${parseFloat(r.price).toFixed(2)}/noche`).join('%0A');
+
+            let text = `Hola ${client}, un gusto saludarte de *Casa Hospedaje H&L*. 🏨✨%0A%0A*COTIZACIÓN DE ESTADÍA:*%0A- *Fechas:* del ${inDate} al ${outDate} (${nights} Noche(s))%0A- *Habitaciones:*%0A${roomSummary}`;
+
+            if (discountPct > 0) {
+                text += `%0A- *Descuento Especial Aplicado:* ${discountPct}%25`;
+            }
+
+            text += `%0A%0A📌 *Para confirmar la reserva se requiere el 50% de adelanto.*%0AQuedamos atentos a tus consultas. ¡Te esperamos!`;
+
+            const url = phone ? `https://wa.me/51${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+            window.open(url, '_blank');
+        }
+
+        function convertQuoteToReservation() {
+            const selectedRooms = getSelectedQuoteRooms();
+            if (selectedRooms.length === 0) {
+                alert('Selecciona al menos una habitación.');
+                return;
+            }
+
+            const client = document.getElementById('quote-client').value;
+            const phone = document.getElementById('quote-phone').value;
+            const inDate = document.getElementById('quote-in').value;
+            const outDate = document.getElementById('quote-out').value;
+            const discount = parseFloat(document.getElementById('quote-discount').value) || 0;
+
+            if (selectedRooms.length === 1) {
+                switchTab('reservations');
+                openNewReservationModal();
+
+                document.getElementById('res-guest').value = client;
+                document.getElementById('res-phone').value = phone;
+                document.getElementById('res-room').value = selectedRooms[0].id;
+                document.getElementById('res-checkin').value = inDate;
+                document.getElementById('res-checkout').value = outDate;
+                document.getElementById('res-discount').value = discount;
+
+                calculateReservationTotal();
+            } else {
+                if (confirm(`Has seleccionado ${selectedRooms.length} habitaciones. ¿Deseas registrarlas de forma independiente para este huésped?`)) {
+                    selectedRooms.forEach(room => {
+                        const nights = Math.ceil((new Date(outDate) - new Date(inDate)) / (1000 * 60 * 60 * 24));
+                        let subtotal = nights * parseFloat(room.price || 0);
+                        if (discount > 0) subtotal -= subtotal * (discount / 100);
+
+                        const resData = {
+                            id: 'RES-' + Math.floor(1000 + Math.random() * 9000),
+                            guestName: client || 'Reserva Múltiple',
+                            dni: '',
+                            phone: phone,
+                            roomId: room.id,
+                            checkIn: inDate,
+                            checkOut: outDate,
+                            paymentMethod: 'YAPE/PLIN',
+                            paymentStatus: 'PARCIAL',
+                            totalAmount: subtotal,
+                            paidAmount: subtotal * 0.5,
+                            pendingBalance: subtotal * 0.5
+                        };
+                        appData.reservations.push(resData);
+                    });
+
+                    saveData();
+                    renderDashboard();
+                    renderCalendar();
+                    renderReservations();
+                    runAiDiagnostic();
+                    switchTab('reservations');
+                }
+            }
+        }
+
+        // --- HABITACIONES CORREGIDAS ---
+        function renderRooms() {
+            const grid = document.getElementById('rooms-grid-container');
+            
+            appData.rooms = (appData.rooms || []).filter(r => r && r.id && r.number);
+
+            if (appData.rooms.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-300 p-6">
+                    <i class="fa-solid fa-bed text-3xl mb-2 text-slate-300"></i>
+                    <p class="font-bold">No tienes habitaciones registradas.</p>
+                    <p class="text-xs">Haz clic en "Registrar Habitación" para empezar desde cero.</p>
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = appData.rooms.map(room => {
+                const priceFormatted = room.price ? parseFloat(room.price).toFixed(2) : '0.00';
+                const amenitiesBadges = (room.amenities || []).map(a => `<span class="bg-slate-100 text-slate-700 text-[10px] px-2 py-0.5 rounded-md font-medium border border-slate-200"><i class="fa-solid fa-check text-emerald-600 mr-1"></i>${a}</span>`).join(' ');
+
+                return `
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Piso ${room.floor || 1}</span>
+                                    <h3 class="text-xl font-black text-slate-800 mt-1">Habitación ${room.number}</h3>
+                                    <p class="text-xs text-slate-500 font-medium">${room.type}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-black text-emerald-700">S/ ${priceFormatted}</span>
+                                    <span class="text-[10px] text-slate-400 block">por noche</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 flex flex-wrap gap-1">
+                                ${amenitiesBadges}
+                            </div>
+
+                            ${room.notes ? `<p class="text-xs text-slate-400 mt-2 italic">"${room.notes}"</p>` : ''}
+                        </div>
+
+                        <div class="flex gap-2 pt-3 border-t border-slate-100">
+                            <button onclick="editRoom('${room.id}')" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-pen-to-square"></i> Editar
+                            </button>
+                            <button onclick="requestDeleteRoom('${room.id}')" class="flex-1 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openRoomModal(roomId = null) {
+            document.getElementById('form-room').reset();
+            document.getElementById('room-id').value = '';
+            document.getElementById('modal-room-title').innerText = 'Registrar Habitación';
+
+            if (roomId) {
+                const room = appData.rooms.find(r => r && r.id === roomId);
+                if (room) {
+                    document.getElementById('modal-room-title').innerText = 'Editar Habitación';
+                    document.getElementById('room-id').value = room.id;
+                    document.getElementById('room-number').value = room.number || '';
+                    document.getElementById('room-floor').value = room.floor || 1;
+                    document.getElementById('room-type').value = room.type || 'Simple / Individual';
+                    document.getElementById('room-price').value = room.price || '';
+                    document.getElementById('room-notes').value = room.notes || '';
+
+                    const ams = room.amenities || [];
+                    document.getElementById('amenity-bathroom-private').checked = ams.includes('Baño Privado');
+                    document.getElementById('amenity-bathroom-shared').checked = ams.includes('Baño Compartido');
+                    document.getElementById('amenity-tv').checked = ams.includes('TV Cable');
+                    document.getElementById('amenity-kitchen').checked = ams.includes('Cocina');
+                    document.getElementById('amenity-breakfast').checked = ams.includes('Desayuno');
+                    document.getElementById('amenity-towels').checked = ams.includes('Toallas');
+                    document.getElementById('amenity-wifi').checked = ams.includes('Wi-Fi');
+                }
+            }
+
+            document.getElementById('modal-room').classList.remove('hidden');
+        }
+
+        function editRoom(id) {
+            openRoomModal(id);
+        }
+
+        function handleSaveRoom(e) {
+            e.preventDefault();
+            const id = document.getElementById('room-id').value;
+
+            let amenities = [];
+            if (document.getElementById('amenity-bathroom-private').checked) amenities.push('Baño Privado');
+            if (document.getElementById('amenity-bathroom-shared').checked) amenities.push('Baño Compartido');
+            if (document.getElementById('amenity-tv').checked) amenities.push('TV Cable');
+            if (document.getElementById('amenity-kitchen').checked) amenities.push('Cocina');
+            if (document.getElementById('amenity-breakfast').checked) amenities.push('Desayuno');
+            if (document.getElementById('amenity-towels').checked) amenities.push('Toallas');
+            if (document.getElementById('amenity-wifi').checked) amenities.push('Wi-Fi');
+
+            const number = document.getElementById('room-number').value.trim();
+            const floor = parseInt(document.getElementById('room-floor').value) || 1;
+            const type = document.getElementById('room-type').value;
+            const price = parseFloat(document.getElementById('room-price').value) || 0;
+            const notes = document.getElementById('room-notes').value.trim();
+
+            if (!number) {
+                alert("Por favor ingresa el número o nombre de la habitación.");
+                return;
+            }
+
+            if (id) {
+                const idx = appData.rooms.findIndex(r => r && r.id === id);
+                if (idx !== -1) {
+                    appData.rooms[idx] = {
+                        id: id,
+                        number: number,
+                        floor: floor,
+                        type: type,
+                        price: price,
+                        amenities: amenities,
+                        notes: notes
+                    };
+                }
+            } else {
+                const newRoom = {
+                    id: Date.now().toString(),
+                    number: number,
+                    floor: floor,
+                    type: type,
+                    price: price,
+                    amenities: amenities,
+                    notes: notes
+                };
+                appData.rooms.push(newRoom);
+            }
+
+            saveData();
+            renderRooms();
+            renderDashboard();
+            renderCalendar();
+            updateQuoteRoomOptions();
+            runAiDiagnostic();
+            closeModal('modal-room');
+        }
+
+        function requestDeleteRoom(id) {
+            requireSecurityPin(() => {
+                appData.rooms = appData.rooms.filter(r => r && r.id !== id);
+                saveData();
+                renderRooms();
+                renderDashboard();
+                renderCalendar();
+                updateQuoteRoomOptions();
+                runAiDiagnostic();
+            });
+        }
+
+        // --- EGRESOS ---
+        function renderExpenses() {
+            const tbody = document.getElementById('expenses-table-body');
+            if (appData.expenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">No hay egresos registrados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = appData.expenses.map(exp => `
+                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                    <td class="p-4 text-xs font-medium text-slate-600">${exp.date}</td>
+                    <td class="p-4 font-semibold text-slate-800">${exp.concept}</td>
+                    <td class="p-4 text-xs"><span class="bg-rose-50 text-rose-700 px-2 py-1 rounded-md font-medium border border-rose-100">${exp.category}</span></td>
+                    <td class="p-4 font-bold text-rose-600">S/ ${parseFloat(exp.amount).toFixed(2)}</td>
+                    <td class="p-4 text-right space-x-1">
+                        <button onclick="editExpense('${exp.id}')" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="requestDeleteExpense('${exp.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openNewExpenseModal(expId = null) {
+            document.getElementById('form-expense').reset();
+            document.getElementById('exp-id').value = '';
+            document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
+
+            if (expId) {
+                const exp = appData.expenses.find(e => e.id === expId);
+                if (exp) {
+                    document.getElementById('exp-id').value = exp.id;
+                    document.getElementById('exp-concept').value = exp.concept;
+                    document.getElementById('exp-category').value = exp.category;
+                    document.getElementById('exp-amount').value = exp.amount;
+                    document.getElementById('exp-date').value = exp.date;
+                }
+            }
+
+            document.getElementById('modal-expense').classList.remove('hidden');
+        }
+
+        function editExpense(id) {
+            openNewExpenseModal(id);
+        }
+
+        function handleSaveExpense(e) {
+            e.preventDefault();
+            const id = document.getElementById('exp-id').value;
+            const expData = {
+                id: id || Date.now().toString(),
+                concept: document.getElementById('exp-concept').value,
+                category: document.getElementById('exp-category').value,
+                amount: parseFloat(document.getElementById('exp-amount').value) || 0,
+                date: document.getElementById('exp-date').value
+            };
+
+            if (id) {
+                const idx = appData.expenses.findIndex(e => e.id === id);
+                if (idx !== -1) appData.expenses[idx] = expData;
+            } else {
+                appData.expenses.push(expData);
+            }
+
+            saveData();
+            renderExpenses();
+            renderDashboard();
+            runAiDiagnostic();
+            closeModal('modal-expense');
+        }
+
+        function requestDeleteExpense(id) {
+            requireSecurityPin(() => {
+                appData.expenses = appData.expenses.filter(e => e.id !== id);
+                saveData();
+                renderExpenses();
+                renderDashboard();
+                runAiDiagnostic();
+            });
+        }
+
+        // --- IMPRESIÓN COMPROBANTE ---
+        function printReceipt(resId) {
+            const res = appData.reservations.find(r => r.id === resId);
+            if (!res) return;
+
+            const room = appData.rooms.find(r => r && r.id === res.roomId);
+
+            document.getElementById('receipt-code').innerText = `N° ${res.id}`;
+            document.getElementById('receipt-details').innerHTML = `
+                <div class="flex justify-between border-b pb-1"><span class="text-slate-500">Huésped:</span> <span class="font-bold text-slate-800">${res.guestName}</span></div>
+                <div class="flex justify-between border-b pb-1"><span class="text-slate-500">DNI/PAS:</span> <span>${res.dni || 'N/A'}</span></div>
+                <div class="flex justify-between border-b pb-1"><span class="text-slate-500">Habitación:</span> <span class="font-bold text-emerald-700">Hab. ${room ? room.number : 'N/A'} (${room ? room.type : ''})</span></div>
+                <div class="flex justify-between border-b pb-1"><span class="text-slate-500">Check-In:</span> <span>${res.checkIn}</span></div>
+                <div class="flex justify-between border-b pb-1"><span class="text-slate-500">Check-Out:</span> <span>${res.checkOut}</span></div>
+                <div class="flex justify-between border-b pb-1"><span class="text-slate-500">Medio de Pago:</span> <span>${res.paymentMethod}</span></div>
+                
+                <div class="pt-2 space-y-1">
+                    <div class="flex justify-between font-medium"><span>Costo Total Estadía:</span> <span>S/ ${parseFloat(res.totalAmount).toFixed(2)}</span></div>
+                    <div class="flex justify-between font-bold text-emerald-700"><span>Abono Realizado:</span> <span>S/ ${parseFloat(res.paidAmount).toFixed(2)}</span></div>
+                    ${parseFloat(res.pendingBalance) > 0 ? `<div class="flex justify-between font-bold text-amber-600 bg-amber-50 p-1 rounded"><span>Saldo Pendiente (Check-in):</span> <span>S/ ${parseFloat(res.pendingBalance).toFixed(2)}</span></div>` : '<div class="text-center font-bold text-emerald-600 pt-1">¡CANCELADO 100%!</div>'}
+                </div>
+            `;
+
+            document.getElementById('modal-receipt').classList.remove('hidden');
+        }
+
+        // --- SEGURIDAD ---
+        function requireSecurityPin(callback) {
+            pendingPinCallback = callback;
+            document.getElementById('pin-input').value = '';
+            document.getElementById('modal-pin').classList.remove('hidden');
+            setTimeout(() => document.getElementById('pin-input').focus(), 100);
+        }
+
+        function verifyPinAction() {
+            const entered = document.getElementById('pin-input').value;
+            if (entered === appData.pin) {
+                closeModal('modal-pin');
+                if (pendingPinCallback) {
+                    pendingPinCallback();
+                    pendingPinCallback = null;
+                }
+            } else {
+                alert('⚠️ PIN Incorrecto.');
+                document.getElementById('pin-input').value = '';
+            }
+        }
+
+        function openSecurityPinModal() {
+            const current = prompt('Ingresa la clave PIN actual (Por defecto: 1234):');
+            if (current === appData.pin) {
+                const next = prompt('Ingresa el nuevo PIN de 4 dígitos:');
+                if (next && next.length === 4 && !isNaN(next)) {
+                    appData.pin = next;
+                    saveData();
+                    alert('✅ Clave PIN actualizada con éxito.');
+                } else {
+                    alert('⚠️ El nuevo PIN debe contener 4 dígitos numéricos.');
+                }
+            } else if (current !== null) {
+                alert('⚠️ Clave PIN incorrecta.');
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

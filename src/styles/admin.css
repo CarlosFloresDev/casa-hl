@@ -1,0 +1,208 @@
+/* Scoped to the admin: shared React components retain their public appearance. */
+.admin-shell {
+  --admin-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --admin-shadow: 0 2px 4px rgb(31 74 63 / 0.025), 0 12px 32px -20px rgb(31 74 63 / 0.22);
+  background: var(--color-stone);
+}
+
+.admin-shell :is(a, button):focus-visible {
+  outline: 2px solid var(--color-pine-500);
+  outline-offset: 4px;
+}
+.admin-shell #admin-nav {
+  background: linear-gradient(165deg, var(--color-pine-900), var(--color-pine-800));
+  box-shadow: 6px 0 28px -16px rgb(17 42 36 / 0.3);
+  transition: transform 220ms var(--admin-ease);
+}
+.admin-shell #admin-nav :focus-visible { outline-color: var(--color-pine-200); }
+.admin-brand > span:first-child {
+  box-shadow: 0 2px 0 rgb(255 255 255 / 0.2) inset, 0 5px 16px rgb(0 0 0 / 0.12);
+}
+.admin-brand > span:last-child > span:last-child { margin-top: 5px; }
+.admin-shell .admin-nav-item {
+  position: relative;
+  margin-bottom: 4px;
+  transition: transform 160ms var(--admin-ease);
+}
+.admin-nav-item[aria-current='page'] {
+  background: linear-gradient(110deg, var(--color-surface), var(--color-pine-50));
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.12), 0 1px 0 rgb(255 255 255 / 0.7) inset;
+}
+.admin-nav-item[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-pine-500);
+}
+.admin-user { border: 1px solid rgb(255 255 255 / 0.08); }
+.admin-user > span:first-child { box-shadow: 0 0 0 3px rgb(255 255 255 / 0.05); }
+.admin-page-header h1, .admin-login h1 {
+  font-family: var(--font-serif, var(--font-display));
+  font-weight: 400;
+  font-size: clamp(2rem, 3.6vw, 2.75rem);
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+}
+.admin-page-header h1 { animation: admin-enter 220ms var(--admin-ease) both; }
+.admin-page-header p { animation: admin-enter 220ms var(--admin-ease) 50ms both; }
+/* El contenido cambia sin fundido: la página anterior no debe verse encima de la nueva.
+   La entrada suave la dan los encabezados (admin-enter) sobre el DOM nuevo. */
+html:has(.admin-shell)::view-transition-group(admin-content),
+html:has(.admin-shell)::view-transition-old(admin-content),
+html:has(.admin-shell)::view-transition-new(admin-content) { animation: none; }
+html:has(.admin-shell)::view-transition-old(admin-content) { display: none; }
+html:has(.admin-shell)::view-transition-group(admin-sidebar),
+html:has(.admin-shell)::view-transition-old(admin-sidebar),
+html:has(.admin-shell)::view-transition-new(admin-sidebar) { animation: none; }
+html:has(.admin-shell)::view-transition-group(root) { animation: none; }
+
+.admin-login { background: var(--color-surface); }
+.admin-login-photo { overflow: hidden; min-height: 100dvh; background: var(--color-pine-900); }
+/* Ambient photograph is intentionally slower than UI feedback. */
+.admin-login-photo > img { animation: admin-ken-burns 24s ease-in-out infinite alternate; }
+.admin-photo-shade {
+  background: linear-gradient(180deg, rgb(17 42 36 / 0.08) 15%, rgb(17 42 36 / 0.28) 50%, rgb(17 42 36 / 0.92));
+}
+.admin-photo-shade::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23grain)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.admin-login-quote {
+  font-family: var(--font-serif, var(--font-display));
+  font-size: clamp(2rem, 3.5vw, 3.5rem);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.admin-login main { background: radial-gradient(ellipse at top right, var(--color-pine-50), transparent 60%); }
+.admin-login-brand > span:first-child { box-shadow: 0 5px 16px -6px rgb(31 74 63 / 0.4); }
+.admin-login-step { animation: admin-enter 220ms var(--admin-ease) backwards; animation-delay: calc(var(--step, 0) * 50ms); }
+.admin-password-wrap { position: relative; }
+.admin-password-wrap input { padding-right: 6rem; }
+.admin-password-wrap button {
+  position: absolute;
+  right: 6px;
+  top: 5px;
+  bottom: 5px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--color-pine-700);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.admin-login-submit { display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 12px -4px rgb(31 74 63 / 0.35); }
+.admin-login-submit:disabled { opacity: 0.7; cursor: wait; }
+.admin-spinner:not([hidden]) {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: admin-spin 250ms linear infinite;
+}
+.admin-today > article, .admin-card {
+  border-color: color-mix(in srgb, var(--color-mist) 65%, transparent);
+  box-shadow: var(--admin-shadow);
+}
+.admin-today > article, .admin-card, .admin-upcoming {
+  animation: admin-enter 220ms var(--admin-ease) both;
+  animation-delay: calc(var(--step, 0) * 50ms);
+}
+.admin-today > article:nth-of-type(2) { --step: 1; }
+.admin-today > article:nth-of-type(3) { --step: 2; }
+.admin-month { overflow: hidden; }
+.admin-month > header { background: color-mix(in srgb, var(--color-pine-50) 45%, var(--color-surface)); }
+.admin-month-total { margin-top: 8px; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -0.045em; font-variant-numeric: tabular-nums; }
+.admin-payment-bar { transform: scaleX(var(--progress)); transform-origin: left; animation: admin-progress 240ms var(--admin-ease) 150ms both; }
+
+.admin-shell [data-ui-button], .admin-shell .admin-login-submit, .admin-page-header a {
+  transition: transform 160ms var(--admin-ease);
+}
+.admin-shell [data-ui-button='primary'] { box-shadow: 0 2px 3px rgb(31 74 63 / 0.08), 0 4px 12px -6px rgb(31 74 63 / 0.35); }
+.admin-shell :is([data-ui-button], .admin-login-submit, .admin-nav-item, .admin-page-header a):active:not(:disabled) { transform: scale(0.97); }
+/* Keyboard presses stay immediate; repeated keys do not retrigger motion. */
+.admin-shell :is([data-ui-button], .admin-login-submit, .admin-nav-item, .admin-page-header a):focus-visible:active { transform: none; transition: none; }
+.admin-shell [data-ui-badge] { line-height: 1.6; letter-spacing: 0.005em; box-shadow: 0 1px 2px rgb(31 74 63 / 0.04); }
+.admin-shell .field-input {
+  transition: none;
+  min-height: 44px;
+  border-color: var(--color-mist);
+  box-shadow: 0 1px 2px rgb(31 74 63 / 0.035);
+}
+.admin-shell .field-input:focus {
+  outline: 2px solid var(--color-pine-500);
+  outline-offset: 2px;
+  border-color: var(--color-pine-500);
+  box-shadow: 0 0 0 4px rgb(51 112 95 / 0.08);
+}
+/* Fade a separate halo so borders, colors and shadows never animate. */
+.admin-shell [data-ui-field-control] { display: block; position: relative; }
+.admin-shell [data-ui-field-control]::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 3px solid var(--color-pine-200);
+  border-radius: 15px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms var(--admin-ease);
+}
+.admin-shell [data-ui-field-control]:focus-within::after { opacity: 0.45; }
+.admin-shell [data-ui-field-control]:has(:focus-visible)::after { transition: none; }
+.admin-shell [data-ui-field-control]:has([aria-invalid='true'])::after { border-color: var(--color-danger-500); }
+.admin-shell [data-ui-field]:focus-within > .field-label { color: var(--color-pine-700); }
+.admin-shell .field-input[aria-invalid='true'] { border-color: var(--color-danger-500); }
+.admin-shell .field-input[aria-invalid='true']:focus { outline-color: var(--color-danger-500); }
+.admin-shell label:has(> input[type='checkbox']) { transition: none; }
+.admin-shell dialog.app-dialog[open] > .dialog-panel { animation: admin-dialog-in 220ms var(--admin-ease) both; box-shadow: 0 24px 80px -20px rgb(17 42 36 / 0.3); }
+.admin-shell dialog.app-dialog[open]::backdrop { animation: admin-backdrop-in 180ms var(--admin-ease) both; }
+.admin-shell .admin-toaster {
+  --success-bg: var(--color-pine-50);
+  --success-border: var(--color-pine-200);
+  --success-text: var(--color-pine-700);
+  font-family: var(--font-sans);
+}
+.admin-shell .admin-toaster [data-sonner-toast] { box-shadow: var(--admin-shadow); transition-property: transform, opacity; transition-duration: 220ms; transition-timing-function: var(--admin-ease); }
+.admin-shell .admin-toaster [data-close-button] { transition: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-shell .admin-nav-item:not([aria-current='page']):hover { background: rgb(255 255 255 / 0.08); color: white; }
+  .admin-shell [data-ui-button]:not(:disabled):hover { transform: translateY(-1px); }
+  .admin-shell [data-ui-button]:not(:disabled):active { transform: scale(0.97); }
+  .admin-password-wrap button:hover { background: var(--color-pine-50); }
+  .admin-login-submit:not(:disabled):hover { background: var(--color-pine-800); }
+  .admin-shell .field-input:not(:disabled):not(:focus):hover { border-color: var(--color-pine-200); }
+}
+@media (hover: none), (pointer: coarse) {
+  .admin-shell [data-ui-button='primary']:hover { background: var(--color-pine-700); }
+  .admin-shell [data-ui-button='secondary']:hover { background: var(--color-surface); border-color: var(--color-mist); }
+  .admin-shell [data-ui-button='ghost']:hover { background: transparent; color: var(--color-ink-soft); }
+  .admin-shell [data-ui-button='danger']:hover { background: var(--color-danger-500); }
+  .admin-shell [data-ui-button='danger-ghost']:hover { background: transparent; }
+  .admin-shell [data-ui-button='accent']:hover { filter: none; }
+}
+@media (width < 64rem) {
+  html:has(.admin-shell #admin-nav[data-open='true']) { overflow: hidden; }
+}
+@keyframes admin-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes admin-content-out { to { opacity: 0; transform: translateY(-4px); } }
+@keyframes admin-dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes admin-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes admin-progress { from { transform: scaleX(0); } to { transform: scaleX(var(--progress)); } }
+@keyframes admin-ken-burns { from { transform: scale(1.01); } to { transform: scale(1.065); } }
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .admin-shell *, .admin-shell *::before, .admin-shell *::after { animation: none !important; transition: none !important; }
+  .admin-shell [data-ui-button]:hover, .admin-shell :is([data-ui-button], .admin-login-submit, .admin-nav-item, .admin-page-header a):active { transform: none !important; }
+  html:has(.admin-shell)::view-transition-group(*), html:has(.admin-shell)::view-transition-old(*), html:has(.admin-shell)::view-transition-new(*) { animation: none !important; }
+}

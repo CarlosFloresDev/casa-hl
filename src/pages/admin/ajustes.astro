@@ -1,0 +1,29 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import SettingsPanel from '@/components/admin/settings/SettingsPanel';
+import { SITE } from '@/config/site';
+import { listUsers } from '@/lib/server/users';
+
+const me = Astro.locals.user!;
+const users = me.role === 'admin' ? await listUsers() : [];
+---
+
+<AdminLayout title="Ajustes" section="settings" description="Tu cuenta, usuarios, respaldos y datos del negocio.">
+  <SettingsPanel client:load transition:persist="settings-panel" me={me} users={users} />
+
+  <section class="mt-6 rounded-[var(--radius-card)] border border-mist bg-surface p-5 sm:p-6">
+    <h2 class="font-display text-lg font-semibold">Datos del negocio</h2>
+    <p class="mt-1 mb-5 text-sm text-ink-muted">
+      Aparecen en el sitio web, los comprobantes y los mensajes de WhatsApp. Se editan en
+      <code class="rounded bg-stone px-1.5 py-0.5 text-[13px]">src/config/site.ts</code>.
+    </p>
+    <dl class="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
+      <div class="flex justify-between gap-4 border-b border-mist pb-2"><dt class="text-ink-muted">Nombre</dt><dd>{SITE.name}</dd></div>
+      <div class="flex justify-between gap-4 border-b border-mist pb-2"><dt class="text-ink-muted">WhatsApp</dt><dd class="tabular">{SITE.phoneDisplay}</dd></div>
+      <div class="flex justify-between gap-4 border-b border-mist pb-2"><dt class="text-ink-muted">Correo</dt><dd>{SITE.email}</dd></div>
+      <div class="flex justify-between gap-4 border-b border-mist pb-2"><dt class="text-ink-muted">Dirección</dt><dd>{SITE.address}, {SITE.city}</dd></div>
+      <div class="flex justify-between gap-4 border-b border-mist pb-2"><dt class="text-ink-muted">Ingreso</dt><dd class="tabular">desde las {SITE.checkInTime}</dd></div>
+      <div class="flex justify-between gap-4 border-b border-mist pb-2"><dt class="text-ink-muted">Salida</dt><dd class="tabular">hasta las {SITE.checkOutTime}</dd></div>
+    </dl>
+  </section>
+</AdminLayout>

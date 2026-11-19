@@ -1,0 +1,227 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { actions } from 'astro:actions';
+import LayoutDashboard from '@lucide/astro/icons/layout-dashboard';
+import CalendarDays from '@lucide/astro/icons/calendar-days';
+import BookOpenCheck from '@lucide/astro/icons/book-open-check';
+import Calculator from '@lucide/astro/icons/calculator';
+import BedDouble from '@lucide/astro/icons/bed-double';
+import Wallet from '@lucide/astro/icons/wallet';
+import Inbox from '@lucide/astro/icons/inbox';
+import Settings from '@lucide/astro/icons/settings';
+import LogOut from '@lucide/astro/icons/log-out';
+import Menu from '@lucide/astro/icons/menu';
+import ExternalLink from '@lucide/astro/icons/external-link';
+import Toaster from '@/components/ui/Toaster';
+import { SITE } from '@/config/site';
+import { countNewInquiries } from '@/lib/server/inquiries';
+import { USER_ROLES } from '@/lib/domain/catalog';
+import '@/styles/global.css';
+import '@/styles/admin.css';
+
+export type AdminSection =
+  | 'dashboard'
+  | 'calendar'
+  | 'reservations'
+  | 'quote'
+  | 'rooms'
+  | 'finance'
+  | 'inquiries'
+  | 'settings';
+
+interface Props {
+  title: string;
+  section: AdminSection;
+  description?: string;
+}
+
+const { title, section, description } = Astro.props;
+const user = Astro.locals.user!;
+const newInquiries = await countNewInquiries();
+
+const nav = [
+  { key: 'dashboard', href: '/admin', label: 'Resumen', icon: LayoutDashboard },
+  { key: 'calendar', href: '/admin/calendario', label: 'Calendario', icon: CalendarDays },
+  { key: 'reservations', href: '/admin/reservas', label: 'Reservas', icon: BookOpenCheck },
+  { key: 'inquiries', href: '/admin/solicitudes', label: 'Solicitudes web', icon: Inbox, count: newInquiries },
+  { key: 'quote', href: '/admin/cotizador', label: 'Cotizador', icon: Calculator },
+  { key: 'rooms', href: '/admin/habitaciones', label: 'Habitaciones', icon: BedDouble },
+  { key: 'finance', href: '/admin/caja', label: 'Caja chica', icon: Wallet },
+  { key: 'settings', href: '/admin/ajustes', label: 'Ajustes', icon: Settings },
+] as const;
+---
+
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{`${title} · Gestión ${SITE.shortName}`}</title>
+    <ClientRouter fallback="swap" />
+  </head>
+  <body class="admin-shell min-h-dvh">
+    <div class="lg:grid lg:min-h-dvh lg:grid-cols-[15.5rem_1fr]">
+      <!-- Barra lateral -->
+      <aside
+        id="admin-nav"
+        transition:name="admin-sidebar"
+        transition:animate="none"
+        data-open="false"
+        class="no-print fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col bg-pine-900 text-pine-50 transition-transform duration-300 ease-[var(--ease-out-soft)] data-[open=true]:translate-x-0 lg:sticky lg:top-0 lg:h-dvh lg:w-auto lg:translate-x-0"
+      >
+        <a href="/admin" class="admin-brand flex items-center gap-3 px-5 pt-6 pb-7">
+          <span
+            class="grid size-10 place-items-center rounded-xl bg-pine-50 font-display text-[15px] font-bold tracking-tight text-pine-800"
+            >H&L</span
+          >
+          <span class="leading-tight">
+            <span class="block font-display text-[17px] font-semibold text-white">Casa H&L</span>
+            <span class="block text-xs text-pine-200">Gestión del hospedaje</span>
+          </span>
+        </a>
+
+        <nav aria-label="Secciones" class="flex-1 space-y-0.5 overflow-y-auto px-3">
+          {
+            nav.map((item) => {
+              const Icon = item.icon;
+              const active = item.key === section;
+              return (
+                <a
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  class:list={[
+                    'admin-nav-item group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px]',
+                    active
+                      ? 'bg-pine-50 font-medium text-pine-900'
+                      : 'text-pine-100 [@media(pointer:fine)]:hover:bg-white/8 [@media(pointer:fine)]:hover:text-white',
+                  ]}
+                >
+                  <Icon class="size-[18px] shrink-0" aria-hidden="true" />
+                  <span class="flex-1">{item.label}</span>
+                  {'count' in item && item.count > 0 && (
+                    <span class="rounded-full bg-marigold-500 px-2 py-0.5 text-[11px] font-semibold text-ink tabular">
+                      {item.count}
+                    </span>
+                  )}
+                </a>
+              );
+            })
+          }
+        </nav>
+
+        <div class="border-t border-white/10 px-3 py-4">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener"
+            class="mb-2 flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] text-pine-200 [@media(pointer:fine)]:hover:bg-white/8 [@media(pointer:fine)]:hover:text-white"
+          >
+            <ExternalLink class="size-4" aria-hidden="true" /> Ver sitio público
+          </a>
+          <div class="admin-user flex items-center gap-3 rounded-xl bg-white/6 px-3 py-2.5">
+            <span
+              class="grid size-8 shrink-0 place-items-center rounded-full bg-pine-600 text-sm font-semibold text-white"
+              aria-hidden="true">{user.name.charAt(0).toUpperCase()}</span
+            >
+            <span class="min-w-0 flex-1 leading-tight">
+              <span class="block truncate text-[13px] font-medium text-white">{user.name}</span>
+              <span class="block text-xs text-pine-200">{USER_ROLES[user.role]}</span>
+            </span>
+            <form method="POST" action={'/admin/login' + actions.auth.logout} data-astro-reload>
+              <button
+                type="submit"
+                class="grid size-8 place-items-center rounded-lg text-pine-200 [@media(pointer:fine)]:hover:bg-white/10 [@media(pointer:fine)]:hover:text-white"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+              >
+                <LogOut class="size-4" aria-hidden="true" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </aside>
+      <div id="admin-nav-scrim" class="no-print fixed inset-0 z-30 hidden bg-pine-900/40 lg:hidden"></div>
+
+      <!-- Contenido -->
+      <div class="min-w-0">
+        <header
+          class="no-print sticky top-0 z-20 flex items-center gap-3 border-b border-mist bg-stone/90 px-4 py-3 backdrop-blur lg:hidden"
+        >
+          <button
+            id="admin-nav-toggle"
+            type="button"
+            class="grid size-10 place-items-center rounded-xl border border-mist bg-surface"
+            aria-controls="admin-nav"
+            aria-expanded="false"
+            aria-label="Abrir menú"
+          >
+            <Menu class="size-5" aria-hidden="true" />
+          </button>
+          <a href="/admin" class="font-display text-lg font-semibold">Casa H&L</a>
+        </header>
+
+        <main transition:name="admin-content" transition:animate="none" class="admin-main mx-auto w-full max-w-[90rem] px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+          <div class="admin-page-header mb-7 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 class="font-display text-[1.75rem] leading-tight font-semibold tracking-tight text-ink sm:text-[2rem]">
+                {title}
+              </h1>
+              {description && <p class="mt-1 max-w-2xl text-[15px] text-ink-muted">{description}</p>}
+            </div>
+            <div class="no-print flex flex-wrap gap-2"><slot name="actions" /></div>
+          </div>
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <Toaster client:load transition:persist="toaster" />
+
+    <script>
+      let cleanupNav = () => {};
+      function setupNav() {
+        cleanupNav();
+        const nav = document.getElementById('admin-nav');
+        const toggle = document.getElementById('admin-nav-toggle');
+        const scrim = document.getElementById('admin-nav-scrim');
+        if (!nav || !toggle || !scrim) return;
+        const desktop = window.matchMedia('(min-width: 1024px)');
+        const set = (open: boolean) => {
+          nav.dataset.open = String(open);
+          toggle.setAttribute('aria-expanded', String(open));
+          scrim.classList.toggle('hidden', !open);
+          toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+          nav.inert = !desktop.matches && !open;
+        };
+        set(false);
+        toggle.onclick = () => set(nav.dataset.open !== 'true');
+        scrim.onclick = () => set(false);
+        const close = () => set(false);
+        const keydown = (event: KeyboardEvent) => {
+          if (event.key === 'Escape' && nav.dataset.open === 'true') {
+            close();
+            toggle.focus();
+          }
+          if (event.key === 'Tab' && !desktop.matches && nav.dataset.open === 'true') {
+            const items = [toggle, ...nav.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')];
+            const first = items[0];
+            const last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+            if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+          }
+        };
+        nav.onclick = (event) => { if ((event.target as Element).closest('a')) close(); };
+        document.addEventListener('keydown', keydown);
+        desktop.addEventListener('change', close);
+        cleanupNav = () => {
+          document.removeEventListener('keydown', keydown);
+          desktop.removeEventListener('change', close);
+        };
+      }
+      document.addEventListener('astro:page-load', setupNav);
+      document.addEventListener('astro:before-swap', () => cleanupNav());
+    </script>
+  </body>
+</html>

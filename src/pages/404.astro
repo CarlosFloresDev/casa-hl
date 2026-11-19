@@ -1,0 +1,15 @@
+---
+import SiteLayout from '@/layouts/SiteLayout.astro';
+---
+
+<SiteLayout title="Página no encontrada">
+  <section class="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-start justify-center px-4 py-20 sm:px-6">
+    <p class="font-serif text-[9rem] leading-none text-pine-200">404</p>
+    <h1 class="mt-4 font-serif text-5xl">Esta página no existe</h1>
+    <p class="mt-3 text-lg text-ink-soft">Puede que el enlace esté mal escrito o que la habitación ya no esté publicada.</p>
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="/" class="inline-flex h-11 items-center rounded-full bg-pine-700 px-5 font-medium text-white hover:bg-pine-800">Ir al inicio</a>
+      <a href="/#habitaciones" class="inline-flex h-11 items-center rounded-full border border-mist px-5 font-medium hover:bg-stone">Ver habitaciones</a>
+    </div>
+  </section>
+</SiteLayout>

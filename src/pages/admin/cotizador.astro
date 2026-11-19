@@ -1,0 +1,24 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import QuoteBuilder from '@/components/admin/quote/QuoteBuilder';
+import type { RoomOption } from '@/components/admin/types';
+import { listRooms } from '@/lib/server/rooms';
+
+const rooms: RoomOption[] = (await listRooms()).map((r) => ({
+  id: r.id,
+  number: r.number,
+  name: r.name,
+  type: r.type,
+  capacity: r.capacity,
+  priceCents: r.priceCents,
+  active: r.active,
+}));
+---
+
+<AdminLayout
+  title="Cotizador"
+  section="quote"
+  description="Arma una propuesta con una o varias habitaciones, envíala por WhatsApp y conviértela en reserva cuando el cliente confirme."
+>
+  <QuoteBuilder client:load rooms={rooms} />
+</AdminLayout>

@@ -1,0 +1,152 @@
+---
+import { Image } from 'astro:assets';
+import { actions, isInputError } from 'astro:actions';
+import { SITE } from '@/config/site';
+import hero from '@/assets/images/hero-habitacion.jpg';
+import '@/styles/global.css';
+import '@/styles/admin.css';
+
+const loginResult = Astro.getActionResult(actions.auth.login);
+const logoutResult = Astro.getActionResult(actions.auth.logout);
+
+const rawNext = Astro.url.searchParams.get('next') ?? '/admin';
+// Solo rutas internas del panel: evita redirecciones abiertas.
+const next = rawNext.startsWith('/admin') && !rawNext.startsWith('//') ? rawNext : '/admin';
+
+if (loginResult && !loginResult.error) return Astro.redirect(next);
+if (Astro.locals.user && !logoutResult) return Astro.redirect(next);
+
+const inputErrors = isInputError(loginResult?.error) ? loginResult.error.fields : {};
+const formError = loginResult?.error && !isInputError(loginResult.error) ? loginResult.error.message : null;
+---
+
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>{`Ingresar · Gestión ${SITE.shortName}`}</title>
+  </head>
+  <body class="admin-shell admin-login min-h-dvh">
+    <div class="grid min-h-dvh lg:grid-cols-[1fr_minmax(0,34rem)]">
+      <div class="admin-login-photo relative hidden lg:block">
+        <Image
+          src={hero}
+          alt=""
+          widths={[800, 1200, 1600]}
+          sizes="(min-width: 1024px) 60vw, 0px"
+          class="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+        />
+        <div class="admin-photo-shade absolute inset-0" aria-hidden="true"></div>
+        <div class="admin-photo-caption absolute right-10 bottom-12 left-10 max-w-lg text-white">
+          <p class="mb-4 text-sm text-pine-100">{SITE.name} · {SITE.city}</p>
+          <p class="admin-login-quote">Cada buena estadía empieza con un detalle bien cuidado.</p>
+          <p class="mt-5 max-w-sm text-sm leading-relaxed text-pine-100">Reservas, pagos y caja del día en un solo lugar.</p>
+        </div>
+      </div>
+
+      <main class="flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-sm">
+          <a href="/" class="admin-login-brand admin-login-step mb-10 inline-flex items-center gap-3" style="--step:0">
+            <span class="grid size-11 place-items-center rounded-xl bg-pine-700 font-display font-bold text-white">H&L</span>
+            <span class="font-display text-lg font-semibold">{SITE.name}</span>
+          </a>
+          <div class="admin-login-step" style="--step:1">
+            <h1 class="font-display text-3xl font-semibold tracking-tight">Ingresa al panel</h1>
+            <p class="mt-3 text-[15px] leading-relaxed text-ink-muted">Usa el usuario que te asignó la administración.</p>
+          </div>
+
+          {
+            logoutResult && !logoutResult.error && (
+              <p class="mt-6 rounded-xl bg-pine-50 px-4 py-3 text-sm text-pine-800" role="status">
+                Cerraste sesión correctamente.
+              </p>
+            )
+          }
+          {
+            formError && (
+              <p class="mt-6 rounded-xl bg-danger-50 px-4 py-3 text-sm text-danger-700" role="alert">
+                {formError}
+              </p>
+            )
+          }
+
+          <form id="admin-login-form" method="POST" action={`${actions.auth.login}&next=${encodeURIComponent(next)}`} class="mt-8 space-y-5">
+            <div class="admin-login-step" style="--step:2">
+              <label for="username" class="field-label">Usuario</label>
+              <input
+                id="username"
+                name="username"
+                autocomplete="username"
+                required
+                class="field-input"
+                aria-invalid={inputErrors.username ? 'true' : undefined}
+                aria-describedby={inputErrors.username ? 'username-error' : undefined}
+              />
+              {inputErrors.username && <p id="username-error" class="mt-1.5 text-[13px] text-danger-500">{inputErrors.username[0]}</p>}
+            </div>
+            <div class="admin-login-step" style="--step:3">
+              <label for="password" class="field-label">Contraseña</label>
+              <div class="admin-password-wrap">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                class="field-input"
+                aria-invalid={inputErrors.password ? 'true' : undefined}
+                aria-describedby={inputErrors.password ? 'password-error' : undefined}
+              />
+                <button id="password-toggle" type="button" aria-controls="password" aria-label="Mostrar contraseña" aria-pressed="false" hidden>Mostrar</button>
+              </div>
+              {inputErrors.password && <p id="password-error" class="mt-1.5 text-[13px] text-danger-500">{inputErrors.password[0]}</p>}
+            </div>
+            <button
+              type="submit"
+              class="admin-login-submit admin-login-step h-12 w-full rounded-xl bg-pine-700 text-[15px] font-medium text-white"
+              style="--step:4"
+            >
+              <span class="admin-spinner" aria-hidden="true" hidden></span>
+              <span data-submit-label>Ingresar</span>
+            </button>
+            <p class="sr-only" role="status" id="login-status"></p>
+          </form>
+        </div>
+      </main>
+    </div>
+    <script is:inline>
+      (() => {
+        const form = document.getElementById('admin-login-form');
+        const password = document.getElementById('password');
+        const toggle = document.getElementById('password-toggle');
+        const submit = form.querySelector('[type="submit"]');
+        toggle.hidden = false;
+        toggle.addEventListener('click', () => {
+          const visible = password.type === 'password';
+          password.type = visible ? 'text' : 'password';
+          toggle.setAttribute('aria-pressed', String(visible));
+          toggle.setAttribute('aria-label', visible ? 'Ocultar contraseña' : 'Mostrar contraseña');
+          toggle.textContent = visible ? 'Ocultar' : 'Mostrar';
+        });
+        form.addEventListener('submit', () => {
+          submit.disabled = true;
+          submit.setAttribute('aria-busy', 'true');
+          submit.querySelector('.admin-spinner').hidden = false;
+          submit.querySelector('[data-submit-label]').textContent = 'Ingresando…';
+          document.getElementById('login-status').textContent = 'Ingresando…';
+        });
+        window.addEventListener('pageshow', () => {
+          submit.disabled = false;
+          submit.removeAttribute('aria-busy');
+          submit.querySelector('.admin-spinner').hidden = true;
+          submit.querySelector('[data-submit-label]').textContent = 'Ingresar';
+          document.getElementById('login-status').textContent = '';
+        });
+      })();
+    </script>
+  </body>
+</html>

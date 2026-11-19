@@ -1,0 +1,49 @@
+---
+import { SITE, whatsappLink } from '@/config/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="relative overflow-hidden bg-pine-900 text-pine-100">
+  <div class="mx-auto grid max-w-[90rem] gap-12 px-5 pt-20 pb-10 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr] lg:px-12">
+    <div>
+      <p class="max-w-sm text-[17px] leading-relaxed text-pine-200">
+        {SITE.tagline}. Ingreso desde las {SITE.checkInTime}, salida hasta las {SITE.checkOutTime}.
+      </p>
+      <a href="/reservar" class="btn-press btn-arrow mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-medium text-ink hover:bg-pine-50">
+        Solicitar reserva
+        <svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+      </a>
+    </div>
+    <div>
+      <p class="mb-4 text-sm text-pine-300">Contacto</p>
+      <ul class="space-y-2.5 text-[15px]">
+        <li><a class="transition-colors hover:text-white" href={whatsappLink(`Hola, quisiera información de ${SITE.name}.`)} target="_blank" rel="noopener">WhatsApp {SITE.phoneDisplay}</a></li>
+        <li><a class="transition-colors hover:text-white" href={`mailto:${SITE.email}`}>{SITE.email}</a></li>
+        <li><a class="transition-colors hover:text-white" href={SITE.mapLink} target="_blank" rel="noopener">{SITE.address}, {SITE.city}</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="mb-4 text-sm text-pine-300">Hospedaje</p>
+      <ul class="space-y-2.5 text-[15px]">
+        <li><a class="transition-colors hover:text-white" href="/#habitaciones">Habitaciones y precios</a></li>
+        <li><a class="transition-colors hover:text-white" href="/#como-reservar">Cómo reservar</a></li>
+        <li><a class="transition-colors hover:text-white" href="/#preguntas">Preguntas frecuentes</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <p
+    class="pointer-events-none mx-auto max-w-[90rem] px-3 font-serif text-[clamp(5rem,21vw,20rem)] leading-[0.8] tracking-[-0.04em] whitespace-nowrap text-white/[0.07] select-none"
+    aria-hidden="true"
+  >
+    Casa H&L
+  </p>
+
+  <div class="border-t border-white/10">
+    <div class="mx-auto flex max-w-[90rem] flex-wrap justify-between gap-3 px-5 py-6 text-[13px] text-pine-300 sm:px-8 lg:px-12">
+      <p>© {year} {SITE.name}</p>
+      <a href="/admin" class="transition-colors hover:text-white">Acceso del personal</a>
+    </div>
+  </div>
+</footer>

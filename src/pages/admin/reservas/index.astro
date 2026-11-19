@@ -1,0 +1,96 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import ReservationsManager from '@/components/admin/reservations/ReservationsManager';
+import type { ReservationDraft, RoomOption } from '@/components/admin/types';
+import { EXTRA_KEYS, RESERVATION_STATUS_KEYS, type ExtraKey, type ReservationStatus } from '@/lib/domain/catalog';
+import { addDays, isIsoDate } from '@/lib/domain/dates';
+import { getInquiry } from '@/lib/server/inquiries';
+import { countByStatus, listReservations } from '@/lib/server/reservations';
+import { listRooms } from '@/lib/server/rooms';
+
+const params = Astro.url.searchParams;
+const estadoParam = params.get('estado') ?? 'activas';
+const estado = (['activas', 'todas', ...RESERVATION_STATUS_KEYS] as string[]).includes(estadoParam) ? estadoParam : 'activas';
+const q = (params.get('q') ?? '').trim().slice(0, 80);
+
+const [rows, roomList, byStatus] = await Promise.all([
+  listReservations({ status: estado as ReservationStatus | 'activas' | 'todas', q: q || undefined }),
+  listRooms({ includeInactive: true }),
+  countByStatus(),
+]);
+
+const rooms: RoomOption[] = roomList.map((r) => ({
+  id: r.id,
+  number: r.number,
+  name: r.name,
+  type: r.type,
+  capacity: r.capacity,
+  priceCents: r.priceCents,
+  active: r.active,
+}));
+
+const counts = {
+  ...byStatus,
+  activas: byStatus.confirmada + byStatus.en_casa,
+  todas: Object.values(byStatus).reduce((a, b) => a + b, 0),
+};
+
+// Prefill del formulario de nueva reserva (desde calendario, cotizador o solicitudes web).
+let prefill: Partial<ReservationDraft> | null = null;
+if (params.get('nueva') === '1') {
+  prefill = {};
+  const room = params.get('room');
+  if (room && rooms.some((r) => r.id === room)) prefill.roomId = room;
+  const checkIn = params.get('checkIn');
+  if (checkIn && isIsoDate(checkIn)) {
+    prefill.checkIn = checkIn;
+    const checkOut = params.get('checkOut');
+    prefill.checkOut = checkOut && isIsoDate(checkOut) && checkOut > checkIn ? checkOut : addDays(checkIn, 1);
+  }
+  const discount = Number(params.get('discount'));
+  if (discount > 0 && discount <= 100) prefill.discountPct = Math.round(discount);
+  const extras = (params.get('extras') ?? '').split(',').filter((x): x is ExtraKey => (EXTRA_KEYS as string[]).includes(x));
+  if (extras.length) prefill.extras = extras;
+  if (params.get('name')) prefill.guestName = params.get('name')!.slice(0, 120);
+  if (params.get('phone')) prefill.guestPhone = params.get('phone')!.slice(0, 20);
+  const guests = Number(params.get('guests'));
+  if (guests >= 1 && guests <= 20) prefill.guests = guests;
+  if (params.has('checkIn') || params.has('room')) prefill.source = 'directa';
+  if (params.has('discount') || params.has('extras')) prefill.source = 'cotizacion';
+
+  const inquiryId = params.get('inquiry');
+  const inquiry = inquiryId ? await getInquiry(inquiryId) : undefined;
+  if (inquiry) {
+    prefill = {
+      ...prefill,
+      inquiryId: inquiry.id,
+      guestName: inquiry.name,
+      guestPhone: inquiry.phone,
+      guestEmail: inquiry.email,
+      guests: inquiry.guests,
+      checkIn: inquiry.checkIn,
+      checkOut: inquiry.checkOut,
+      extras: inquiry.extras,
+      source: 'web',
+      notes: inquiry.message,
+      ...(inquiry.roomIds[0] && rooms.some((r) => r.id === inquiry.roomIds[0]) ? { roomId: inquiry.roomIds[0] } : {}),
+    };
+  }
+}
+
+const openId = params.get('ver');
+const isAdmin = Astro.locals.user?.role === 'admin';
+---
+
+<AdminLayout title="Reservas" section="reservations" description="Ingresos, salidas, pagos y saldos de cada estadía.">
+  <ReservationsManager transition:persist="reservations-manager"
+    client:load
+    rows={rows}
+    rooms={rooms}
+    isAdmin={isAdmin}
+    filters={{ estado, q }}
+    counts={counts}
+    prefill={prefill}
+    openId={openId}
+  />
+</AdminLayout>

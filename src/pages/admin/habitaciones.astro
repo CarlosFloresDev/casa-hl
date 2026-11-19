@@ -1,0 +1,24 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import RoomsManager from '@/components/admin/rooms/RoomsManager';
+import { addDays, todayIso } from '@/lib/domain/dates';
+import { roomThumbnails } from '@/lib/images';
+import { occupiedRoomIds } from '@/lib/server/reservations';
+import { listRooms } from '@/lib/server/rooms';
+
+const today = todayIso();
+const [rooms, thumbnails, occupied] = await Promise.all([
+  listRooms({ includeInactive: true }),
+  roomThumbnails(),
+  occupiedRoomIds(today, addDays(today, 1)),
+]);
+const isAdmin = Astro.locals.user?.role === 'admin';
+---
+
+<AdminLayout
+  title="Habitaciones"
+  section="rooms"
+  description="Precios, servicios y fotos. Lo que publiques aquí es lo que ven los huéspedes en el sitio."
+>
+  <RoomsManager client:load transition:persist="rooms-manager" rooms={rooms} thumbnails={thumbnails} isAdmin={isAdmin} occupiedToday={[...occupied]} />
+</AdminLayout>

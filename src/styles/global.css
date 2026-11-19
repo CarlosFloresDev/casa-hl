@@ -1,0 +1,133 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource/instrument-serif/400.css';
+@import '@fontsource/instrument-serif/400-italic.css';
+
+/*
+ * Tokens de diseño — Casa H&L
+ * pine: verde eucalipto (marca) · ink: texto · stone: fondo · mist: bordes · marigold: saldos/pendientes
+ */
+@theme {
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Geist Variable', ui-sans-serif, sans-serif;
+  --font-serif: 'Instrument Serif', 'Times New Roman', ui-serif, serif;
+
+  --color-pine-50: #eef5f2;
+  --color-pine-100: #d6e7e0;
+  --color-pine-200: #aecfc2;
+  --color-pine-300: #7fb1a0;
+  --color-pine-400: #4f8d7a;
+  --color-pine-500: #33705f;
+  --color-pine-600: #2b6656;
+  --color-pine-700: #1f4a3f;
+  --color-pine-800: #183a31;
+  --color-pine-900: #112a24;
+
+  --color-ink: #17201d;
+  --color-ink-soft: #46524d;
+  --color-ink-muted: #6b7671;
+
+  --color-stone: #f3f4f1;
+  --color-mist: #dce3de;
+  --color-surface: #ffffff;
+
+  --color-marigold-50: #fdf6e7;
+  --color-marigold-100: #f9e7bf;
+  --color-marigold-500: #d9962b;
+  --color-marigold-700: #8f5d12;
+
+  --color-danger-50: #fbefec;
+  --color-danger-500: #b4412f;
+  --color-danger-700: #8a2f21;
+
+  --radius-card: 1.25rem;
+  --shadow-soft: 0 1px 2px rgb(23 32 29 / 0.06), 0 8px 24px -12px rgb(23 32 29 / 0.18);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-stone font-sans text-ink antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-pine-500);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-pine-200);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+}
+
+@layer components {
+  .field-input {
+    @apply block w-full rounded-xl border border-mist bg-surface px-3 py-2.5 text-[15px] text-ink shadow-[inset_0_1px_0_rgb(23_32_29/0.03)] transition-colors placeholder:text-ink-muted/70 hover:border-pine-200 focus:border-pine-500 focus:ring-3 focus:ring-pine-500/15 focus:outline-none disabled:bg-stone disabled:text-ink-muted;
+  }
+  .field-label {
+    @apply mb-1.5 block text-[13px] font-medium text-ink-soft;
+  }
+}
+
+/* Diálogos nativos */
+dialog.app-dialog {
+  margin: auto;
+  border: none;
+  padding: 0;
+  background: transparent;
+  max-height: calc(100dvh - 2rem);
+  overflow: visible;
+}
+dialog.app-dialog::backdrop {
+  background: rgb(17 42 36 / 0.45);
+  backdrop-filter: blur(3px);
+}
+dialog.app-dialog[open] > .dialog-panel {
+  animation: dialog-in 220ms var(--ease-out-soft);
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}

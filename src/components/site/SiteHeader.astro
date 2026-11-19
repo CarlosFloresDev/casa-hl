@@ -1,0 +1,246 @@
+---
+import { SITE, whatsappLink } from '@/config/site';
+
+interface Props {
+  /** Transparente y en blanco sobre una portada a pantalla completa */
+  overlay?: boolean;
+}
+const { overlay = false } = Astro.props;
+
+const links = [
+  { href: '/#habitaciones', label: 'Habitaciones' },
+  { href: '/#la-casa', label: 'La casa' },
+  { href: '/#como-reservar', label: 'Cómo reservar' },
+  { href: '/#ubicacion', label: 'Ubicación' },
+];
+---
+
+<header
+  class="site-header fixed inset-x-0 top-0 z-40"
+  data-site-header
+  data-overlay={String(overlay)}
+  data-scrolled="false"
+  data-menu="closed"
+>
+  <div class="site-header-bar mx-auto flex h-[4.5rem] max-w-[90rem] items-center gap-6 px-5 sm:px-8 lg:px-12">
+    <a href="/" class="relative z-10 flex items-center gap-3" aria-label={`${SITE.name}, inicio`}>
+      <span class="brand-mark grid size-10 place-items-center rounded-[12px] font-display text-[13px] font-bold tracking-tight">H&L</span>
+      <span class="leading-none">
+        <span class="block font-serif text-[1.45rem] tracking-tight">Casa H&L</span>
+        <span class="brand-sub mt-0.5 block text-[11px] tracking-[0.08em]">Hospedaje familiar</span>
+      </span>
+    </a>
+
+    <nav aria-label="Principal" class="ml-auto hidden items-center lg:flex">
+      {links.map((l) => <a href={l.href} class="nav-link px-3 py-2 text-[15px]">{l.label}</a>)}
+    </nav>
+
+    <a
+      href="/reservar"
+      class="header-cta btn-press btn-arrow ml-auto hidden h-11 items-center gap-2 rounded-full px-5 text-sm font-medium lg:ml-3 lg:inline-flex"
+    >
+      Reservar
+      <svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+    </a>
+
+    <button
+      type="button"
+      class="menu-toggle relative z-10 ml-auto grid size-11 place-items-center rounded-full lg:hidden"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      aria-label="Abrir menú"
+      data-menu-toggle
+    >
+      <span class="menu-icon" aria-hidden="true"><span></span><span></span></span>
+    </button>
+  </div>
+
+  <div id="mobile-menu" class="mobile-menu lg:hidden" data-mobile-menu>
+    <nav aria-label="Principal móvil" class="flex flex-col gap-1 px-6 pt-28">
+      {
+        links.map((l, i) => (
+          <a href={l.href} class="mobile-link font-serif text-[2.6rem] leading-tight" style={`--i:${i}`}>
+            {l.label}
+          </a>
+        ))
+      }
+    </nav>
+    <div class="mobile-link mt-auto space-y-3 px-6 pb-10" style="--i:4">
+      <a href="/reservar" class="btn-press flex h-14 items-center justify-center rounded-full bg-marigold-500 text-[15px] font-semibold text-ink">
+        Solicitar reserva
+      </a>
+      <a
+        href={whatsappLink(`Hola, quisiera consultar disponibilidad en ${SITE.name}.`)}
+        target="_blank"
+        rel="noopener"
+        class="btn-press flex h-14 items-center justify-center rounded-full border border-white/25 text-[15px] font-medium text-white"
+      >
+        Escribir por WhatsApp
+      </a>
+    </div>
+  </div>
+</header>
+{!overlay && <div class="h-[4.5rem]" aria-hidden="true"></div>}
+
+<style>
+  .site-header {
+    color: var(--color-ink);
+    transition: color 300ms ease;
+  }
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(255 255 255 / 0.82);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    box-shadow: 0 1px 0 rgb(23 32 29 / 0.07);
+    transition: opacity 400ms var(--ease-out-strong);
+  }
+  .site-header-bar {
+    position: relative;
+  }
+  .brand-mark {
+    background: var(--color-pine-700);
+    color: white;
+  }
+  .brand-sub {
+    color: var(--color-ink-muted);
+  }
+  .header-cta {
+    background: var(--color-pine-700);
+    color: white;
+  }
+  .header-cta:hover {
+    background: var(--color-pine-800);
+  }
+  .menu-toggle {
+    border: 1px solid var(--color-mist);
+  }
+
+  /* Sobre la portada: transparente y en blanco hasta que se baja */
+  .site-header[data-overlay='true'][data-scrolled='false'] {
+    color: white;
+  }
+  .site-header[data-overlay='true'][data-scrolled='false']::before {
+    opacity: 0;
+  }
+  .site-header[data-overlay='true'][data-scrolled='false'] .brand-mark {
+    background: rgb(255 255 255 / 0.14);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.35);
+  }
+  .site-header[data-overlay='true'][data-scrolled='false'] .brand-sub {
+    color: rgb(255 255 255 / 0.7);
+  }
+  .site-header[data-overlay='true'][data-scrolled='false'] .header-cta {
+    background: white;
+    color: var(--color-ink);
+  }
+  .site-header[data-overlay='true'][data-scrolled='false'] .menu-toggle {
+    border-color: rgb(255 255 255 / 0.35);
+  }
+
+  /* Menú móvil */
+  .menu-icon {
+    position: relative;
+    display: block;
+    width: 18px;
+    height: 10px;
+  }
+  .menu-icon span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform 300ms var(--ease-out-strong);
+  }
+  .menu-icon span:first-child {
+    top: 0;
+  }
+  .menu-icon span:last-child {
+    bottom: 0;
+  }
+  .site-header[data-menu='open'] .menu-icon span:first-child {
+    transform: translateY(4.25px) rotate(45deg);
+  }
+  .site-header[data-menu='open'] .menu-icon span:last-child {
+    transform: translateY(-4.25px) rotate(-45deg);
+  }
+  .site-header[data-menu='open'] {
+    color: white;
+  }
+  .site-header[data-menu='open']::before {
+    opacity: 0;
+  }
+  .site-header[data-menu='open'] .menu-toggle {
+    border-color: rgb(255 255 255 / 0.35);
+  }
+  .site-header[data-menu='open'] .brand-sub {
+    color: rgb(255 255 255 / 0.7);
+  }
+
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-pine-900);
+    color: white;
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+    transition:
+      clip-path 600ms var(--ease-in-out-strong),
+      visibility 0s linear 600ms;
+  }
+  .site-header[data-menu='open'] .mobile-menu {
+    clip-path: inset(0 0 0 0);
+    visibility: visible;
+    transition:
+      clip-path 600ms var(--ease-in-out-strong),
+      visibility 0s;
+  }
+  .mobile-link {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 500ms var(--ease-out-strong),
+      transform 500ms var(--ease-out-strong);
+  }
+  .site-header[data-menu='open'] .mobile-link {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(250ms + var(--i) * 60ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-menu,
+    .site-header[data-menu='open'] .mobile-menu {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  function setupMenu() {
+    const header = document.querySelector<HTMLElement>('[data-site-header]');
+    const toggle = header?.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+    if (!header || !toggle) return;
+    const set = (open: boolean) => {
+      header.dataset.menu = open ? 'open' : 'closed';
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      document.documentElement.style.overflow = open ? 'hidden' : '';
+    };
+    toggle.onclick = () => set(header.dataset.menu !== 'open');
+    header.querySelectorAll<HTMLAnchorElement>('[data-mobile-menu] a').forEach((a) => a.addEventListener('click', () => set(false)));
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && set(false);
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('astro:before-swap', () => {
+      document.removeEventListener('keydown', onKey);
+      document.documentElement.style.overflow = '';
+    }, { once: true });
+  }
+  document.addEventListener('astro:page-load', setupMenu);
+</script>

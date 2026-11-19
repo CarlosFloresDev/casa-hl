@@ -1,0 +1,137 @@
+---
+import { SITE } from '@/config/site';
+import { PAYMENT_KINDS, PAYMENT_METHODS, RESERVATION_STATUSES } from '@/lib/domain/catalog';
+import { formatDate } from '@/lib/domain/dates';
+import { formatMoney } from '@/lib/domain/money';
+import { getReservation } from '@/lib/server/reservations';
+import '@/styles/global.css';
+
+const r = await getReservation(Astro.params.id ?? '');
+if (!r) return new Response('Reserva no encontrada', { status: 404 });
+
+const issued = new Intl.DateTimeFormat('es-PE', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Lima' }).format(new Date());
+---
+
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{`Comprobante ${r.code} · ${SITE.name}`}</title>
+    <style>
+      @page {
+        size: A5;
+        margin: 12mm;
+      }
+    </style>
+  </head>
+  <body class="bg-stone py-8 print:bg-white print:py-0">
+    <div class="no-print mx-auto mb-4 flex max-w-xl justify-end gap-2 px-4">
+      <button
+        id="print"
+        class="h-10 rounded-xl bg-pine-700 px-4 text-sm font-medium text-white hover:bg-pine-800"
+        type="button">Imprimir o guardar PDF</button
+      >
+    </div>
+    <article class="mx-auto max-w-xl rounded-[var(--radius-card)] bg-surface p-8 shadow-[var(--shadow-soft)] print:max-w-none print:rounded-none print:p-0 print:shadow-none">
+      <header class="flex items-start justify-between gap-6 border-b border-mist pb-5">
+        <div>
+          <p class="font-display text-2xl font-semibold">{SITE.name}</p>
+          <p class="mt-1 text-sm text-ink-muted">{SITE.address} · {SITE.city}</p>
+          <p class="text-sm text-ink-muted">{SITE.phoneDisplay} · {SITE.email}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-sm text-ink-muted">Constancia de reserva</p>
+          <p class="font-display text-xl font-semibold tabular">{r.code}</p>
+          <p class="mt-1 text-xs text-ink-muted">{RESERVATION_STATUSES[r.status]}</p>
+        </div>
+      </header>
+
+      <section class="grid grid-cols-2 gap-x-6 gap-y-3 py-5 text-sm">
+        <div>
+          <p class="text-ink-muted">Huésped</p>
+          <p class="font-medium">{r.guestName}</p>
+          {r.guestDocument && <p class="text-ink-soft">Doc. {r.guestDocument}</p>}
+        </div>
+        <div>
+          <p class="text-ink-muted">Habitación</p>
+          <p class="font-medium">{r.roomNumber}{r.roomName && ` · ${r.roomName}`}</p>
+          <p class="text-ink-soft">{r.guests} {r.guests === 1 ? 'persona' : 'personas'}</p>
+        </div>
+        <div>
+          <p class="text-ink-muted">Ingreso</p>
+          <p class="font-medium">{formatDate(r.checkIn)}</p>
+          <p class="text-ink-soft">desde las {SITE.checkInTime}</p>
+        </div>
+        <div>
+          <p class="text-ink-muted">Salida</p>
+          <p class="font-medium">{formatDate(r.checkOut)}</p>
+          <p class="text-ink-soft">hasta las {SITE.checkOutTime}</p>
+        </div>
+      </section>
+
+      <table class="w-full border-t border-mist text-sm">
+        <tbody class="divide-y divide-mist">
+          <tr>
+            <td class="py-2">{r.nights} {r.nights === 1 ? 'noche' : 'noches'} × {formatMoney(r.nightlyRateCents)}</td>
+            <td class="py-2 text-right tabular">{formatMoney(r.subtotalCents)}</td>
+          </tr>
+          {
+            r.discountCents > 0 && (
+              <tr>
+                <td class="py-2">Descuento {r.discountPct}%</td>
+                <td class="py-2 text-right tabular">−{formatMoney(r.discountCents)}</td>
+              </tr>
+            )
+          }
+          {
+            r.extras.map((x) => (
+              <tr>
+                <td class="py-2">{x.label}</td>
+                <td class="py-2 text-right tabular">{formatMoney(x.amountCents)}</td>
+              </tr>
+            ))
+          }
+          <tr class="font-semibold">
+            <td class="py-2.5">Total</td>
+            <td class="py-2.5 text-right tabular">{formatMoney(r.totalCents)}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {
+        r.payments.length > 0 && (
+          <section class="mt-5">
+            <p class="mb-2 text-sm font-semibold">Pagos recibidos</p>
+            <ul class="space-y-1 text-sm">
+              {r.payments.map((p) => (
+                <li class="flex justify-between gap-4">
+                  <span class="text-ink-soft">
+                    {formatDate(p.paidOn)} · {PAYMENT_KINDS[p.kind]} · {PAYMENT_METHODS[p.method]}
+                  </span>
+                  <span class="tabular">{formatMoney(p.amountCents)}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      <div class="mt-5 flex items-center justify-between rounded-2xl bg-stone px-4 py-3 print:border print:border-mist">
+        <span class="text-sm font-medium">{r.balanceCents > 0 ? 'Saldo a pagar al ingresar' : 'Estadía pagada en su totalidad'}</span>
+        <span class:list={['font-display text-xl font-semibold tabular', r.balanceCents > 0 ? 'text-marigold-700' : 'text-pine-700']}>
+          {formatMoney(r.balanceCents)}
+        </span>
+      </div>
+
+      <footer class="mt-8 border-t border-mist pt-4 text-xs text-ink-muted">
+        <p>Emitido el {issued}. Este documento es una constancia interna de reserva y no reemplaza a un comprobante de pago electrónico.</p>
+        <p class="mt-1">Gracias por elegir {SITE.name}.</p>
+      </footer>
+    </article>
+    <script>
+      document.getElementById('print')?.addEventListener('click', () => window.print());
+    </script>
+  </body>
+</html>

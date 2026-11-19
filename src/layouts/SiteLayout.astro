@@ -1,0 +1,89 @@
+---
+import { getImage } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
+import SiteHeader from '@/components/site/SiteHeader.astro';
+import SiteFooter from '@/components/site/SiteFooter.astro';
+import { SITE } from '@/config/site';
+import { siteImage } from '@/lib/images';
+import '@/styles/global.css';
+import '@/styles/site.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  /** Datos estructurados adicionales (schema.org) */
+  jsonLd?: Record<string, unknown>;
+  /** Cabecera transparente sobre una portada a pantalla completa */
+  overlayHeader?: boolean;
+}
+
+const { title, description = SITE.description, image = 'hero-habitacion', jsonLd, overlayHeader = false } = Astro.props;
+const fullTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const og = await getImage({ src: siteImage(image), width: 1200, height: 630, format: 'jpg', fit: 'cover' });
+const ogUrl = new URL(og.src, Astro.site);
+
+const business = {
+  '@context': 'https://schema.org',
+  '@type': 'LodgingBusiness',
+  name: SITE.name,
+  description: SITE.description,
+  url: Astro.site?.toString(),
+  telephone: SITE.phoneDisplay,
+  email: SITE.email,
+  image: ogUrl.toString(),
+  checkinTime: SITE.checkInTime,
+  checkoutTime: SITE.checkOutTime,
+  priceRange: 'S/',
+  currenciesAccepted: 'PEN',
+  paymentAccepted: 'Efectivo, Yape, Plin, Transferencia, Tarjeta',
+  address: { '@type': 'PostalAddress', streetAddress: SITE.address, addressCountry: 'PE' },
+};
+---
+
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#1f4a3f" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_PE" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      document.addEventListener('astro:after-swap', () => document.documentElement.classList.add('js'));
+    </script>
+    <ClientRouter />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd ? [business, jsonLd] : business)} />
+  </head>
+  <body class="grain min-h-dvh bg-surface">
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-white">
+      Saltar al contenido
+    </a>
+    <SiteHeader overlay={overlayHeader} />
+    <main id="contenido">
+      <slot />
+    </main>
+    <SiteFooter />
+    <script>
+      import '@/scripts/site-motion';
+    </script>
+  </body>
+</html>
