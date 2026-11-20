@@ -22,7 +22,7 @@ Sitio: `http://localhost:4321`; acceso: `/admin/login`. Astro ejecuta el backend
 
 `.env` sirve para Node (seed y URL del build); `.dev.vars` para bindings locales del Worker. No pongas credenciales iniciales en `vars` de Wrangler. El runtime accede a D1 mediante `import { env } from 'cloudflare:workers'`. Los datos públicos en `src/config/site.ts` no dependen de variables de entorno.
 
-`PUBLIC_SITE_URL` en el entorno del build configura `site`, sitemap y metadatos; por defecto es `https://casa-hl.chefsitturchey.workers.dev`. Mantén el mismo valor en `wrangler.jsonc` si cambias el dominio. Cambiar solo una variable del Worker no regenera el sitemap.
+`PUBLIC_SITE_URL` en el entorno del build configura `site`, sitemap y metadatos; por defecto es `https://casa-hl.pages.dev`. Mantén el mismo valor en `wrangler.jsonc` si cambias el dominio. Cambiar solo una variable del Worker no regenera el sitemap.
 
 ## Comandos
 
